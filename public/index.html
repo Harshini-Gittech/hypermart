@@ -1,0 +1,2258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperMart — Interactive 3D &amp; AR Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2563eb",
+                        "primary-hover": "#1d4ed8",
+                        "primary-container": "#1d4ed8",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dbeafe",
+                        "on-primary-fixed": "#1e40af",
+                        "secondary-container": "#f59e0b",
+                        "on-secondary-container": "#ffffff",
+                        "tertiary": "#e11d48",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f5f7fa",
+                        "surface-card": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f1f5f9",
+                        "surface-container": "#e2e8f0",
+                        "on-surface": "#0f172a",
+                        "on-surface-variant": "#475569",
+                        "outline": "#94a3b8",
+                        "outline-variant": "#e2e8f0",
+                        "amber-accent": "#f59e0b"
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "card": "0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03)",
+                        "card-hover": "0 14px 30px -10px rgba(15, 23, 42, 0.14), 0 4px 10px -4px rgba(37, 99, 235, 0.08)"
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+      html { scroll-behavior: smooth; }
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; background-color: #f5f7fa; color: #0f172a; }
+    }
+    @layer utilities {
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .star-filled { font-variation-settings: 'FILL' 1, 'wght' 500; }
+      .star-empty { font-variation-settings: 'FILL' 0, 'wght' 400; }
+    }
+    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-up { animation: fadeSlideUp 0.25s ease-out forwards; }
+    @keyframes floatProduct { 0%, 100% { transform: translateY(0px) rotate(-1.5deg); } 50% { transform: translateY(-9px) rotate(1.5deg); } }
+    @keyframes sheenSweep { 0% { transform: translateX(-140%) skewX(-22deg); } 100% { transform: translateX(240%) skewX(-22deg); } }
+    @keyframes spotlightMorph { from { opacity: 0; transform: translateX(18px) scale(0.96); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes orbDrift { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(22px, -16px) scale(1.08); } }
+    .animate-float-product { animation: floatProduct 4.4s ease-in-out infinite; }
+    .animate-spotlight-morph { animation: spotlightMorph 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .animate-orb { animation: orbDrift 8s ease-in-out infinite; }
+    .rec-card-sheen::after {
+      content: ""; position: absolute; inset: 0; width: 45%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+      transform: translateX(-140%) skewX(-22deg); pointer-events: none;
+    }
+    .rec-card-sheen:hover::after { animation: sheenSweep 0.85s ease-out; }
+  </style>
+</head>
+
+<body class="bg-surface font-sans text-on-surface antialiased selection:bg-primary/15 selection:text-primary">
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="fixed top-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+        <div class="w-full bg-slate-900 px-4 sm:px-6 py-1.5 text-slate-300 text-xs">
+            <div class="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 truncate">
+                    <span class="flex h-2 w-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
+                    <span class="text-white font-bold tracking-wide shrink-0">HYPERMART PRIME LIVE:</span>
+                    <span class="truncate">Related-Word OpenSearch + PostgreSQL + Kafka Real-Time Inventory Sync</span>
+                </div>
+                <div class="hidden sm:flex items-center gap-4 shrink-0">
+                    <button type="button" data-action="open-showroom" class="hover:text-white transition-colors">3D
+                        Showrooms</button>
+                    <button type="button" data-action="open-promo" class="hover:text-white transition-colors">Gift Cards
+                        &amp; Promo</button>
+                    <button type="button" data-action="open-help" class="hover:text-white transition-colors">Help
+                        Center</button>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 shrink-0">
+                <button type="button" id="brandHomeBtn" class="flex items-center gap-2.5 group text-left">
+                    <div
+                        class="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                        HM
+                    </div>
+                    <div class="flex flex-col">
+                        <span
+                            class="text-lg font-extrabold tracking-tight text-slate-900 leading-none group-hover:text-primary transition-colors">
+                            HYPER<span class="text-primary">MART</span>
+                        </span>
+                        <span
+                            class="text-[10px] font-bold text-slate-500 tracking-widest uppercase leading-none mt-1">3D
+                            MARKETPLACE</span>
+                    </div>
+                </button>
+
+                <button type="button" id="openLocationBtn"
+                    class="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors text-left">
+                    <span class="material-symbols-outlined text-primary text-lg">location_on</span>
+                    <div class="flex flex-col">
+                        <span class="text-[11px] text-slate-500 leading-none">Deliver to</span>
+                        <span id="headerLocationText"
+                            class="text-xs font-bold text-slate-900 leading-none mt-0.5">Bengaluru 560001</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Search Bar + Live Autocomplete Dropdown -->
+            <form id="searchForm" class="relative order-3 md:order-2 w-full md:flex-1 max-w-3xl">
+                <div
+                    class="relative flex items-center w-full rounded-xl bg-surface border border-slate-300 focus-within:border-primary focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <select id="headerDeptSelect" aria-label="Department"
+                        class="h-11 pl-3 pr-7 bg-slate-100 border-0 border-r border-slate-300 text-slate-900 text-xs font-semibold rounded-l-xl hover:bg-slate-200 focus:ring-0 cursor-pointer shrink-0">
+                        <option value="all">All</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Audio">Audio</option>
+                        <option value="Wearables">Wearables</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Displays">Displays</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Smartphones">Smartphones</option>
+                        <option value="Laptops">Laptops</option>
+                    </select>
+                    <div class="relative flex-1 flex items-center">
+                        <input id="searchInput" type="text" autocomplete="off"
+                            placeholder="Try related words: dress, jacket, kurta, music, wfh, mobile..."
+                            class="w-full h-11 bg-transparent px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 border-0" />
+                        <button type="button" id="clearSearchBtn" class="hidden p-1 text-slate-400 hover:text-slate-700"
+                            title="Clear search">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                    </div>
+                    <button type="submit"
+                        class="h-11 px-4 sm:px-5 bg-primary hover:bg-primary-hover text-white font-bold rounded-r-xl flex items-center justify-center transition-colors shrink-0"
+                        aria-label="Search">
+                        <span class="material-symbols-outlined text-xl">search</span>
+                    </button>
+                </div>
+
+                <!-- Live Autocomplete Dropdown -->
+                <div id="searchDropdown"
+                    class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 max-h-80 overflow-y-auto divide-y divide-slate-100">
+                </div>
+            </form>
+
+            <div class="order-2 md:order-3 flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <button type="button" id="openWishlistBtn"
+                    class="relative flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-slate-100 transition-colors"
+                    title="Saved Items">
+                    <span class="material-symbols-outlined text-[22px] text-slate-700">favorite</span>
+                    <span id="wishlistBadge"
+                        class="hidden absolute top-1 right-1 bg-rose-500 text-white text-[10px] font-extrabold min-w-[16px] h-4 px-1 rounded-full items-center justify-center">0</span>
+                    <span class="hidden lg:inline text-xs font-bold text-slate-800">Saved</span>
+                </button>
+
+                <button type="button" id="openOrdersBtn"
+                    class="hidden sm:flex flex-col text-left px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+                    <span class="text-[11px] text-slate-500 leading-none">Returns</span>
+                    <span class="text-xs font-bold text-slate-900 leading-none mt-1">&amp; Orders</span>
+                </button>
+
+                <button type="button" id="openCartBtn"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 transition-all group">
+                    <div class="relative flex items-center">
+                        <span
+                            class="material-symbols-outlined text-2xl text-slate-900 group-hover:text-primary transition-colors">shopping_bag</span>
+                        <span id="cartCount"
+                            class="absolute -top-1.5 -right-2 bg-amber-accent text-white text-[10px] font-extrabold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">0</span>
+                    </div>
+                    <div class="hidden md:flex flex-col text-left">
+                        <span class="text-[11px] text-slate-500 leading-none">Cart</span>
+                        <span id="cartTotal"
+                            class="text-xs font-extrabold text-slate-900 leading-none mt-0.5 tabular-nums">₹0</span>
+                    </div>
+                </button>
+
+                <button type="button" id="profileBtn" class="flex items-center pl-0.5" title="Account Profile">
+                    <img alt="Profile"
+                        class="w-8 h-8 rounded-full object-cover ring-2 ring-slate-200 hover:ring-primary transition-all"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxzR5ktyH5m5SCKEyINeliGj8qR-PrRfuHBKaJQmJIIznLtIMLBPTmJ0LsGGgLsLtnPAxGFsqWJNLmE4pYc0RvoMBQf74maQxFYWUBDvhOzk32owLvrAEhk54q842r2HFFLGbsQuzyz2iAYOpsu10C9zZbXCKhxhP0sTMyhVvAaqRuSRHIujwsRJuiBnElwhqvqQFfTxLKIIZMvkdOQk85JPO3wBzjN8ZJa3bDeXda"
+                        data-fallback="https://placehold.co/64x64/1e293b/ffffff?text=NG" />
+                </button>
+            </div>
+        </div>
+
+        <!-- Top Categories Bar -->
+        <div class="w-full bg-white border-t border-slate-100 px-4 sm:px-6">
+            <div class="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
+                <div class="flex items-center overflow-x-auto no-scrollbar py-2 gap-1.5 sm:gap-2">
+                    <button type="button" id="toggleHeaderCatsBtn"
+                        class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-primary text-slate-800 text-xs font-bold transition-colors shrink-0">
+                        <span class="material-symbols-outlined text-base">category</span>
+                        <span id="toggleHeaderCatsLabel">Hide Categories</span>
+                        <span id="toggleHeaderCatsChevron"
+                            class="material-symbols-outlined text-base transition-transform duration-200"
+                            style="transform: rotate(180deg);">expand_more</span>
+                    </button>
+                    <nav id="subNav"
+                        class="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs font-semibold animate-fade-up">
+                        <button type="button" data-nav="all"
+                            class="nav-pill px-3 py-1.5 rounded-lg bg-blue-50 text-primary font-bold transition-colors">All
+                            Categories</button>
+                        <button type="button" data-nav="Fashion"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Fashion</button>
+                        <button type="button" data-nav="deals"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Today's
+                            Deals</button>
+                        <button type="button" data-nav="Audio"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Audio</button>
+                        <button type="button" data-nav="Wearables"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Wearables</button>
+                        <button type="button" data-nav="Accessories"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Accessories</button>
+                        <button type="button" data-nav="Displays"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Displays</button>
+                        <button type="button" data-nav="Furniture"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Furniture</button>
+                        <button type="button" data-nav="Smartphones"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Smartphones</button>
+                        <button type="button" data-nav="Laptops"
+                            class="nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors">Laptops</button>
+                    </nav>
+                </div>
+                <div class="shrink-0 hidden 2xl:flex items-center">
+                    <button type="button" data-action="open-seller"
+                        class="text-xs font-bold text-primary hover:underline">Sell on HyperMart</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="w-full pt-[178px] md:pt-[142px] pb-12 min-h-screen">
+        <div class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 flex flex-col gap-5">
+
+            <!-- 0. ANIMATED AUTO-RECOMMENDATION PRODUCT DASHBOARD -->
+            <section id="recommendationDashboard"
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-xl border border-slate-800/90">
+                <div
+                    class="pointer-events-none absolute -top-20 -left-16 w-72 h-72 rounded-full bg-blue-600/25 blur-3xl animate-orb">
+                </div>
+                <div class="pointer-events-none absolute -bottom-24 right-10 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl animate-orb"
+                    style="animation-delay: -3.5s;"></div>
+
+                <div
+                    class="relative z-10 px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
+                            <span class="material-symbols-outlined text-white text-xl">auto_awesome</span>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-white">
+                                    Auto-Recommended Product Dashboard</h2>
+                                <span id="recLiveStatus"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                    <span>Live AI Engine</span>
+                                </span>
+                            </div>
+                            <p id="recContextSubtitle" class="text-xs text-slate-300 mt-0.5">Auto-adapting in real time
+                                to your browsing, 3D views &amp; live inventory</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div
+                            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs">
+                            <span class="text-slate-400 font-medium">Top Match</span>
+                            <span id="recAvgMatchMetric" class="font-extrabold text-blue-300 tabular-nums">98%</span>
+                        </div>
+                        <div
+                            class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs">
+                            <span class="text-slate-400 font-medium">Avg Savings</span>
+                            <span id="recSavingsMetric"
+                                class="font-extrabold text-emerald-300 tabular-nums">₹2,500</span>
+                        </div>
+                        <button type="button" id="recPlayPauseBtn"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-colors">
+                            <span id="recPlayPauseIcon" class="material-symbols-outlined text-[16px]">pause</span>
+                            <span id="recPlayPauseLabel">Auto-Cycle</span>
+                        </button>
+                        <button type="button" id="recRefreshBtn"
+                            class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 hover:text-white transition-colors">
+                            <span id="recRefreshIcon"
+                                class="material-symbols-outlined text-[18px] block transition-transform duration-500">refresh</span>
+                        </button>
+                        <button type="button" id="toggleRecDashboardBtn"
+                            class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 hover:text-white transition-colors">
+                            <span id="recCollapseIcon"
+                                class="material-symbols-outlined text-[18px] block transition-transform duration-200">expand_less</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="recDashboardBody"
+                    class="relative z-10 p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                    <div id="recSpotlightCard"
+                        class="lg:col-span-5 relative rounded-2xl bg-white/[0.06] backdrop-blur-md border border-white/10 p-5 flex flex-col justify-between gap-4 overflow-hidden">
+                    </div>
+                    <div class="lg:col-span-7 flex flex-col justify-between gap-3">
+                        <div class="flex items-center justify-between">
+                            <span
+                                class="text-[11px] font-extrabold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">trending_up</span>
+                                <span>Personalized For You &middot; Click Any Pick to Spotlight</span>
+                            </span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" id="recPrevBtn"
+                                    class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                                    aria-label="Previous">
+                                    <span class="material-symbols-outlined text-[17px]">chevron_left</span>
+                                </button>
+                                <button type="button" id="recNextBtn"
+                                    class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                                    aria-label="Next">
+                                    <span class="material-symbols-outlined text-[17px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="recCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                        <div class="flex items-center gap-3 pt-1">
+                            <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                <div id="recCycleProgress"
+                                    class="h-full bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 rounded-full transition-all duration-100"
+                                    style="width: 0%"></div>
+                            </div>
+                            <span id="recCycleCounter"
+                                class="text-[11px] font-bold text-slate-300 tabular-nums shrink-0">1 / 4</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. FASHION VISUAL HUB (Shows when Fashion category is active) -->
+            <section id="fashionHub"
+                class="hidden bg-white rounded-2xl p-5 shadow-card border border-slate-200/80 flex-col gap-5 animate-fade-up">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-extrabold text-slate-900">Shop Fashion &amp; Dresses</h2>
+                    <button type="button" data-fashion-q="fashion"
+                        class="text-xs font-bold text-primary hover:underline">View All Fashion</button>
+                </div>
+
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    <button type="button" data-fashion-q="dress" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=240&q=80" alt="Dresses"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Dresses</span>
+                    </button>
+                    <button type="button" data-fashion-q="jacket" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=240&q=80" alt="Jackets"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Jackets</span>
+                    </button>
+                    <button type="button" data-fashion-q="thermals" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=240&q=80"
+                            alt="Shirts & Thermals"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Shirts &amp; Thermals</span>
+                    </button>
+                    <button type="button" data-fashion-q="kurta" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=240&q=80"
+                            alt="Kurta Sets"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Kurta Sets</span>
+                    </button>
+                    <button type="button" data-fashion-q="jeans" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1542272604-787c3835535d?w=240&q=80"
+                            alt="Jeans & Trousers"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Jeans &amp; Trousers</span>
+                    </button>
+                    <button type="button" data-fashion-q="kids" class="group flex flex-col items-center gap-1.5">
+                        <img src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=240&q=80"
+                            alt="Kids Clothing"
+                            class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
+                        <span class="text-xs font-bold text-slate-800">Kids' Clothing</span>
+                    </button>
+                </div>
+
+                <div class="pt-2">
+                    <h3 class="text-sm font-extrabold text-slate-900 mb-3">Shopping for others?</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <button type="button" data-fashion-q="men" class="group flex flex-col items-center gap-2">
+                            <div
+                                class="w-full h-36 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80"
+                                    alt="Men"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            </div>
+                            <span class="text-sm font-extrabold text-slate-900">Men</span>
+                        </button>
+                        <button type="button" data-fashion-q="women" class="group flex flex-col items-center gap-2">
+                            <div
+                                class="w-full h-36 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&q=80"
+                                    alt="Women"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            </div>
+                            <span class="text-sm font-extrabold text-slate-900">Women</span>
+                        </button>
+                        <button type="button" data-fashion-q="kids" class="group flex flex-col items-center gap-2">
+                            <div
+                                class="w-full h-36 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=400&q=80"
+                                    alt="Kids"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            </div>
+                            <span class="text-sm font-extrabold text-slate-900">Kids</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Search Results Header & Toolbar -->
+            <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-card border border-slate-200/80 flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="flex flex-col gap-1">
+                        <nav class="flex items-center gap-1 text-xs font-medium text-slate-500">
+                            <button type="button" id="breadcrumbHome"
+                                class="hover:text-primary transition-colors">Home</button>
+                            <span class="material-symbols-outlined text-[15px]">chevron_right</span>
+                            <span>HyperMart</span>
+                            <span class="material-symbols-outlined text-[15px]">chevron_right</span>
+                            <span id="breadcrumbCurrent" class="text-slate-900 font-semibold">All Categories</span>
+                        </nav>
+                        <p id="resultsSummary" class="text-sm text-slate-600 font-medium">Loading live inventory...</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-1.5">
+                            <span class="text-xs font-semibold text-slate-500">Sort:</span>
+                            <select id="sortSelect" aria-label="Sort products"
+                                class="bg-transparent border-0 py-0.5 pl-0 pr-7 text-xs font-bold text-slate-900 focus:outline-none focus:ring-0 cursor-pointer">
+                                <option value="featured">Featured</option>
+                                <option value="price-asc">Price: Low to High</option>
+                                <option value="price-desc">Price: High to Low</option>
+                                <option value="rating">Avg. Customer Review</option>
+                                <option value="discount">Biggest Savings</option>
+                                <option value="newest">Newest Arrivals</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                            <button type="button" id="gridViewBtn"
+                                class="p-1.5 rounded-lg bg-white text-primary shadow-sm transition-all"
+                                title="Grid View">
+                                <span class="material-symbols-outlined text-[19px] block">grid_view</span>
+                            </button>
+                            <button type="button" id="listViewBtn"
+                                class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition-all"
+                                title="List View">
+                                <span class="material-symbols-outlined text-[19px] block">view_list</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="activeChipsContainer" class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                </div>
+            </section>
+
+            <!-- 3. Full-Width Product Grid + Pagination -->
+            <div class="w-full flex flex-col gap-6">
+                <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+                <div id="emptyState"
+                    class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-card flex-col items-center justify-center gap-3">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-50 text-primary flex items-center justify-center mb-1">
+                        <span class="material-symbols-outlined text-4xl">search_off</span>
+                    </div>
+                    <h3 class="text-lg font-extrabold text-slate-900">No matching products found</h3>
+                    <p class="text-sm text-slate-500 max-w-md">Try clearing a filter chip or searching with related
+                        words like "dress", "jacket", "music", "wfh", or "mobile".</p>
+                    <button type="button" id="emptyResetBtn"
+                        class="mt-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold shadow-sm transition-colors">
+                        Clear All Filters
+                    </button>
+                </div>
+
+                <nav id="paginationBar"
+                    class="bg-white rounded-2xl p-3.5 shadow-card border border-slate-200/80 flex items-center justify-between gap-2">
+                </nav>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="w-full bg-white border-t border-slate-200 mt-10">
+        <button type="button" id="backToTopBtn"
+            class="block w-full py-3 bg-slate-100 hover:bg-slate-200 text-center text-xs font-bold text-slate-800 transition-colors">
+            Back to top &uarr;
+        </button>
+        <div class="w-full bg-surface border-t border-slate-200 py-5 px-6">
+            <div
+                class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-xs">
+                <div>&copy; 2026 HyperMart Inc. All rights reserved.</div>
+                <div class="flex flex-wrap items-center gap-4">
+                    <span>Interactive WebGL &amp; GLB 3D Engine</span>
+                    <span>&middot;</span>
+                    <span>Python Flask + PostgreSQL + OpenSearch + Kafka</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== 3D / AR PRODUCT INSPECTOR MODAL ==================== -->
+    <div id="inspectorModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-sm">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col lg:flex-row animate-fade-up border border-slate-200">
+            <div id="studioBackdrop"
+                class="relative flex-1 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 min-h-[380px] sm:min-h-[470px] lg:min-h-[580px] flex flex-col overflow-hidden select-none transition-colors duration-300">
+                <div
+                    class="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                    <div
+                        class="inline-flex items-center gap-1 p-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/15 pointer-events-auto shadow-lg">
+                        <button type="button" id="modeStudio3DBtn"
+                            class="px-3 py-1 rounded-full bg-primary text-white text-[11px] font-extrabold flex items-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">3d_rotation</span><span>360°
+                                Prototype</span>
+                        </button>
+                        <button type="button" id="modeExploded3DBtn"
+                            class="px-3 py-1 rounded-full text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">layers</span><span>Exploded View</span>
+                        </button>
+                        <button type="button" id="modeWireframe3DBtn"
+                            class="px-3 py-1 rounded-full text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">deployed_code</span><span>CAD
+                                Wireframe</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 pointer-events-auto">
+                        <button type="button" id="toggleARModeBtn"
+                            class="px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 shadow-md transition-colors">
+                            <span class="material-symbols-outlined text-[16px]">view_in_ar</span><span
+                                id="arBtnLabel">AR Desk View</span>
+                        </button>
+                        <button type="button" id="closeInspectorMobile"
+                            class="lg:hidden p-1.5 rounded-full bg-slate-900/80 text-white hover:bg-slate-800">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <model-viewer id="realModelViewer" camera-controls auto-rotate shadow-intensity="1.25"
+                    shadow-softness="0.85" exposure="1.15" environment-image="neutral" ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    class="hidden w-full h-full flex-1 min-h-[380px] sm:min-h-[470px] lg:min-h-[580px]"
+                    style="background: radial-gradient(circle at 50% 42%, #3b2d63 0%, #0f172a 100%);">
+                </model-viewer>
+
+                <div id="threeCanvasContainer" class="w-full h-full flex-1 cursor-grab active:cursor-grabbing relative">
+                </div>
+
+                <div
+                    class="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                    <span
+                        class="px-3 py-1.5 rounded-full bg-slate-950/75 text-slate-200 text-[11px] font-medium border border-white/10">Drag
+                        360° to inspect · Scroll to zoom</span>
+                    <div class="flex items-center gap-2 pointer-events-auto">
+                        <label
+                            class="cursor-pointer px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1 border border-white/20 shadow-md transition-colors">
+                            <span class="material-symbols-outlined text-[15px]">upload_file</span>
+                            <span>Load .GLB</span>
+                            <input id="customGlbInput" type="file" accept=".glb,.gltf" class="hidden" />
+                        </label>
+                        <button type="button" id="autoRotateBtn"
+                            class="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-1 shadow-md">
+                            <span class="material-symbols-outlined text-[15px]">360</span><span>Orbit: ON</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="w-full lg:w-[360px] shrink-0 p-5 sm:p-6 flex flex-col justify-between gap-4 overflow-y-auto max-h-[45vh] lg:max-h-[92vh]">
+                <div class="flex flex-col gap-3.5">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span id="modalBrand"
+                                class="text-[11px] font-extrabold uppercase tracking-wider text-primary">CATEGORY</span>
+                            <h2 id="modalTitle" class="text-lg font-extrabold text-slate-900 leading-snug mt-0.5">
+                                Product Title</h2>
+                        </div>
+                        <button type="button" id="closeInspectorBtn"
+                            class="hidden lg:flex p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="flex items-baseline gap-2.5">
+                        <span id="modalPrice" class="text-2xl font-extrabold text-slate-900 tabular-nums">₹0</span>
+                        <span id="modalOldPrice" class="text-sm text-slate-400 line-through tabular-nums">₹0</span>
+                        <span id="modalSavings"
+                            class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-xs font-bold">Save</span>
+                    </div>
+                    <p id="modalDesc" class="text-xs text-slate-600 leading-relaxed"></p>
+                    <div class="flex flex-col gap-2 pt-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-700">3D Chassis Finish</span>
+                            <span id="modalFinishLabel" class="font-semibold text-primary">Cobalt Titanium</span>
+                        </div>
+                        <div id="modalSwatches" class="flex items-center gap-2"></div>
+                    </div>
+                    <div id="modalSpecs" class="grid grid-cols-2 gap-2 pt-1"></div>
+                </div>
+
+                <div class="flex flex-col gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" id="modalAddToCartBtn"
+                        class="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5">
+                        <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span><span>Add to
+                            Cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SHOPPING CART SLIDE-OVER DRAWER ==================== -->
+    <div id="cartDrawerOverlay" class="fixed inset-0 z-50 hidden bg-slate-950/50 backdrop-blur-sm">
+        <div id="cartDrawer"
+            class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-250">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-2xl">shopping_bag</span>
+                    <h2 class="text-lg font-extrabold text-slate-900">Your Cart</h2>
+                    <span id="drawerCartBadge"
+                        class="px-2 py-0.5 rounded-full bg-blue-100 text-primary text-xs font-extrabold">0</span>
+                </div>
+                <button type="button" id="closeCartBtn" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="cartItemsList" class="flex-1 overflow-y-auto p-5 flex flex-col gap-3"></div>
+            <div class="p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col gap-3">
+                <form id="promoForm" class="flex gap-2">
+                    <input id="promoInput" type="text" placeholder="Promo code (try HYPER10)"
+                        class="flex-1 h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                    <button type="submit"
+                        class="px-4 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Apply</button>
+                </form>
+                <div id="promoAppliedRow"
+                    class="hidden items-center justify-between text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                    <span>Promo HYPER10 (10% off) applied</span>
+                    <button type="button" id="removePromoBtn" class="text-emerald-800 underline">Remove</button>
+                </div>
+                <div class="flex flex-col gap-1.5 text-sm">
+                    <div class="flex justify-between text-slate-600 text-xs font-medium"><span>Subtotal</span><span
+                            id="summarySubtotal" class="tabular-nums font-bold text-slate-900">₹0</span></div>
+                    <div id="summaryDiscountRow" class="hidden justify-between text-emerald-600 text-xs font-semibold">
+                        <span>Promo Discount</span><span id="summaryDiscount" class="tabular-nums">-₹0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600 text-xs font-medium"><span>Estimated GST
+                            (18%)</span><span id="summaryTax"
+                            class="tabular-nums font-semibold text-slate-800">₹0</span></div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-200">
+                        <span class="font-extrabold text-slate-900">Estimated Total</span>
+                        <span id="summaryTotal" class="text-xl font-extrabold text-slate-900 tabular-nums">₹0</span>
+                    </div>
+                </div>
+                <button type="button" id="checkoutBtn"
+                    class="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-extrabold shadow-md transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">local_shipping</span>
+                    <span>Proceed to Address &amp; Payment</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2-STEP CHECKOUT MODAL (ADDRESS -> PAYMENT) ==================== -->
+    <div id="checkoutModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-sm">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col animate-fade-up border border-slate-200">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-4 text-xs font-extrabold">
+                    <div id="stepBadge1" class="flex items-center gap-1.5 text-primary">
+                        <span
+                            class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[11px]">1</span>
+                        <span>Delivery Address</span>
+                    </div>
+                    <span class="text-slate-300">───</span>
+                    <div id="stepBadge2" class="flex items-center gap-1.5 text-slate-400">
+                        <span
+                            class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[11px]">2</span>
+                        <span>Payment</span>
+                    </div>
+                </div>
+                <button type="button" id="closeCheckoutModalBtn"
+                    class="p-1.5 rounded-xl hover:bg-slate-200 text-slate-500">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-7 flex flex-col gap-4">
+                    <!-- STEP 1: ADDRESS DETAILS -->
+                    <form id="addressStepForm" class="flex flex-col gap-3.5">
+                        <h3 class="text-base font-extrabold text-slate-900">Enter Delivery Address</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-600">Full Name *</label>
+                                <input id="addrName" type="text" required placeholder="e.g. Nagendra"
+                                    class="mt-1 w-full h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-600">Mobile Number *</label>
+                                <input id="addrPhone" type="tel" required pattern="[0-9]{10}"
+                                    placeholder="10-digit mobile number"
+                                    class="mt-1 w-full h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-600">Flat / House No., Building, Area
+                                *</label>
+                            <textarea id="addrLine" rows="2" required placeholder="House No., Street, Landmark"
+                                class="mt-1 w-full rounded-xl border-slate-300 text-xs font-semibold"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-600">City *</label>
+                                <input id="addrCity" type="text" required value="Bengaluru"
+                                    class="mt-1 w-full h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-600">Pincode *</label>
+                                <input id="addrPin" type="text" required pattern="[0-9]{6}" placeholder="560001"
+                                    class="mt-1 w-full h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-600">Address Type</label>
+                                <select id="addrType"
+                                    class="mt-1 w-full h-10 rounded-xl border-slate-300 text-xs font-semibold">
+                                    <option value="HOME">HOME</option>
+                                    <option value="WORK">WORK</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="mt-2 w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-extrabold shadow-sm transition-colors">
+                            Save Address &amp; Continue to Payment &rarr;
+                        </button>
+                    </form>
+
+                    <!-- STEP 2: PAYMENT OPTIONS -->
+                    <div id="paymentStepPanel" class="hidden flex-col gap-4">
+                        <div
+                            class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 flex items-start justify-between gap-3">
+                            <div class="text-xs">
+                                <div class="font-extrabold text-slate-900">Deliver to: <span id="payAddrName"></span>
+                                    <span id="payAddrTag"
+                                        class="ml-1 px-1.5 py-0.5 rounded bg-slate-200 text-[10px]">HOME</span>
+                                </div>
+                                <div id="payAddrText" class="text-slate-600 mt-0.5"></div>
+                            </div>
+                            <button type="button" id="editAddressBtn"
+                                class="text-xs font-bold text-primary hover:underline shrink-0">Change</button>
+                        </div>
+
+                        <h3 class="text-base font-extrabold text-slate-900">Select Payment Option</h3>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" data-pay-tab="UPI"
+                                class="pay-tab-btn py-2.5 px-3 rounded-xl border-2 border-primary bg-blue-50 text-primary text-xs font-extrabold">UPI
+                                / QR</button>
+                            <button type="button" data-pay-tab="CARD"
+                                class="pay-tab-btn py-2.5 px-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">Credit
+                                / Debit Card</button>
+                            <button type="button" data-pay-tab="COD"
+                                class="pay-tab-btn py-2.5 px-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">Cash
+                                on Delivery</button>
+                        </div>
+
+                        <!-- UPI Panel -->
+                        <div id="payPanelUPI"
+                            class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-center gap-2.5">
+                            <div class="text-xs font-bold text-slate-700">Scan QR with GPay, PhonePe, or Paytm</div>
+                            <img id="upiQrImg" src="" alt="UPI QR Code"
+                                class="w-40 h-40 rounded-xl bg-white p-2 border border-slate-200 shadow-sm" />
+                            <div class="text-xs font-extrabold text-slate-900">Amount: <span id="upiPayAmount"
+                                    class="text-primary">₹0</span></div>
+                            <button type="button" id="confirmUpiPayBtn"
+                                class="mt-1 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-extrabold shadow-sm">
+                                I Have Paid &amp; Place Order
+                            </button>
+                        </div>
+
+                        <!-- Card Panel -->
+                        <form id="payPanelCARD"
+                            class="hidden p-4 rounded-xl border border-slate-200 bg-slate-50 flex-col gap-3">
+                            <input type="text" required placeholder="Card Number (16 digits)" maxlength="19"
+                                class="w-full h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" required placeholder="MM / YY" maxlength="5"
+                                    class="h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                                <input type="password" required placeholder="CVV" maxlength="3"
+                                    class="h-10 rounded-xl border-slate-300 text-xs font-semibold" />
+                            </div>
+                            <button type="submit" id="confirmCardPayBtn"
+                                class="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-extrabold shadow-sm">
+                                Pay &amp; Place Order
+                            </button>
+                        </form>
+
+                        <!-- COD Panel -->
+                        <div id="payPanelCOD"
+                            class="hidden p-4 rounded-xl border border-slate-200 bg-slate-50 flex-col gap-3">
+                            <p class="text-xs text-slate-600 font-medium">Pay in cash or via UPI to the delivery agent
+                                at your doorstep (Open Box Delivery included).</p>
+                            <button type="button" id="confirmCodPayBtn"
+                                class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-extrabold shadow-sm">
+                                Confirm Cash on Delivery Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Price Details Summary -->
+                <div
+                    class="lg:col-span-5 bg-slate-50 rounded-2xl p-4 border border-slate-200/80 flex flex-col justify-between gap-4 h-fit">
+                    <div>
+                        <h4
+                            class="text-xs font-extrabold uppercase tracking-wider text-slate-500 pb-2.5 border-b border-slate-200">
+                            Price Details</h4>
+                        <div id="checkoutItemsMini"
+                            class="py-3 flex flex-col gap-2 max-h-40 overflow-y-auto border-b border-slate-200 text-xs">
+                        </div>
+                        <div class="pt-3 flex flex-col gap-2 text-xs">
+                            <div class="flex justify-between text-slate-600"><span>Subtotal</span><span id="chkSubtotal"
+                                    class="font-bold text-slate-900">₹0</span></div>
+                            <div class="flex justify-between text-emerald-600"><span>Discount</span><span
+                                    id="chkDiscount" class="font-bold">-₹0</span></div>
+                            <div class="flex justify-between text-slate-600"><span>GST (18%)</span><span id="chkTax"
+                                    class="font-bold text-slate-900">₹0</span></div>
+                            <div
+                                class="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                                <span>Total Amount</span><span id="chkTotal" class="text-primary">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 font-semibold flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-base">verified_user</span>
+                        <span>100% Secure Payment · Instant Kafka Inventory Sync</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== WISHLIST DRAWER ==================== -->
+    <div id="wishlistOverlay" class="fixed inset-0 z-50 hidden bg-slate-950/50 backdrop-blur-sm">
+        <div id="wishlistDrawer"
+            class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-250">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-rose-500 text-2xl star-filled">favorite</span>
+                    <h2 class="text-lg font-extrabold text-slate-900">Saved Items</h2>
+                </div>
+                <button type="button" id="closeWishlistBtn"
+                    class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+            <div id="wishlistItemsList" class="flex-1 overflow-y-auto p-5 flex flex-col gap-3"></div>
+        </div>
+    </div>
+
+    <!-- ==================== UTILITY MODAL (ORDERS & STATUS) ==================== -->
+    <div id="utilityModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-up border border-slate-200">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 id="utilityModalTitle" class="text-base font-extrabold text-slate-900">Modal Title</h3>
+                <button type="button" id="closeUtilityModalBtn"
+                    class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+            <div id="utilityModalBody" class="p-5 max-h-[70vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST CONTAINER ==================== -->
+    <div id="toastContainer"
+        class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none max-w-sm w-[calc(100%-2.5rem)] sm:w-auto">
+    </div>
+
+    <!-- ==================== APPLICATION SCRIPT ==================== -->
+    <script>
+        (function () {
+            "use strict";
+
+            const PRODUCTS = [];
+            const ALL_PRODUCTS = [];
+
+            const state = {
+                search: "",
+                category: "all",
+                headerCatsVisible: true,
+                sort: "featured",
+                viewMode: "grid",
+                page: 1,
+                perPage: 12,
+                promoCode: null,
+                wishlist: new Set(),
+                cart: [],
+                signals: {
+                    preferredCategories: {},
+                    lastTrigger: "Synced live with OpenSearch Related-Word Search & PostgreSQL"
+                },
+                rec: { items: [], activeIndex: 0, autoPlay: true, isHovered: false, progress: 0, collapsed: false, timerId: null }
+            };
+
+            function escapeHtml(str) {
+                return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+            }
+
+            function formatCurrency(val) {
+                return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(val) || 0);
+            }
+
+            function renderStarsHtml(rating, sizePx) {
+                const size = sizePx || 16;
+                let html = "";
+                for (let i = 1; i <= 5; i++) {
+                    if (rating >= i) html += `<span class="material-symbols-outlined star-filled" style="font-size:${size}px">star</span>`;
+                    else if (rating >= i - 0.5) html += `<span class="material-symbols-outlined star-filled" style="font-size:${size}px">star_half</span>`;
+                    else html += `<span class="material-symbols-outlined star-empty" style="font-size:${size}px">star</span>`;
+                }
+                return html;
+            }
+
+            function showToast(message, type) {
+                const container = document.getElementById("toastContainer");
+                if (!container) return;
+                const iconMap = {
+                    success: { icon: "check_circle", cls: "bg-slate-900 text-white border-emerald-500/40" },
+                    info: { icon: "auto_awesome", cls: "bg-slate-900 text-white border-blue-500/40" },
+                    warn: { icon: "warning", cls: "bg-amber-900 text-white border-amber-400/40" }
+                };
+                const cfg = iconMap[type || "info"] || iconMap.info;
+                const el = document.createElement("div");
+                el.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold animate-fade-up ${cfg.cls}`;
+                el.innerHTML = `<span class="material-symbols-outlined text-lg text-blue-400 shrink-0">${cfg.icon}</span><span>${escapeHtml(message)}</span>`;
+                container.appendChild(el);
+                setTimeout(() => { el.style.opacity = "0"; el.style.transition = "all 0.25s ease"; setTimeout(() => el.remove(), 260); }, 2800);
+            }
+
+            function bindImageFallbacks(root) {
+                (root || document).querySelectorAll("img[data-fallback]").forEach((img) => {
+                    if (img.dataset.fallbackBound) return;
+                    img.dataset.fallbackBound = "1";
+                    img.addEventListener("error", () => { if (img.src !== img.dataset.fallback) img.src = img.dataset.fallback; });
+                });
+            }
+
+            /* ---------------- BACKEND OPENSEARCH SYNC & DROPDOWN ---------------- */
+            function detectModelType(name, category) {
+                const n = (name || "").toLowerCase();
+                if (n.includes("earphone") || n.includes("earbud") || n.includes("pod")) return "earbuds";
+                if (n.includes("headphone") || n.includes("headset")) return "headphones";
+                if (n.includes("watch")) return "watch";
+                if (n.includes("mouse")) return "mouse";
+                if (n.includes("keyboard")) return "keyboard";
+                if (n.includes("monitor") || n.includes("display")) return "monitor";
+                if (n.includes("chair")) return "chair";
+                if (n.includes("charger") || n.includes("adapter")) return "charger";
+                if (n.includes("phone") || n.includes("mobile")) return "phone";
+                if (n.includes("laptop") || n.includes("ultrabook")) return "laptop";
+                if (category === "Fashion" || n.includes("dress") || n.includes("jacket") || n.includes("kurta") || n.includes("jeans") || n.includes("thermal")) return "fashion";
+                const catMap = { Audio: "headphones", Wearables: "watch", Displays: "monitor", Furniture: "chair", Smartphones: "phone", Laptops: "laptop", Fashion: "fashion" };
+                return catMap[category] || "earbuds";
+            }
+
+            function mapDbProductToUI(row) {
+                const cat = row.category || "Accessories";
+                const stock = Number(row.inventory_count ?? 0);
+                const modelType = detectModelType(row.name, cat);
+                return {
+                    id: String(row.id),
+                    dbId: Number(row.id),
+                    name: row.name,
+                    brand: row.city || "Bengaluru",
+                    category: cat,
+                    city: row.city || "Bengaluru",
+                    tags: row.tags || "",
+                    modelUrl: row.model_url || null,
+                    inventory_count: stock,
+                    price: Number(row.price),
+                    oldPrice: Math.round(Number(row.price) * 1.15),
+                    rating: 4.8,
+                    reviews: 320 + Number(row.id) * 45,
+                    badge: stock <= 0 ? "Out of Stock" : stock <= 3 ? `Only ${stock} Left` : `${stock} In Stock`,
+                    badgeType: stock <= 3 ? "rose" : "amber",
+                    modelType,
+                    swatches: [
+                        { name: "Cobalt Titanium", hex: "#2563eb" },
+                        { name: "Obsidian Matte", hex: "#1e293b" },
+                        { name: "Pearl Silver", hex: "#e2e8f0" },
+                        { name: "Crimson Edition", hex: "#e11d48" }
+                    ],
+                    specs: { Category: cat, Warehouse: row.city || "India", Stock: `${stock} units`, Delivery: "Prime Next-Day" },
+                    description: `${row.name} — ships from ${row.city} warehouse with interactive 360° 3D & AR preview.`,
+                    image: row.image_url,
+                    fallback: `https://placehold.co/400x300/f1f5f9/334155?text=${encodeURIComponent(row.name)}`
+                };
+            }
+
+            function renderSearchDropdown(query, items) {
+                const dropdown = document.getElementById("searchDropdown");
+                if (!dropdown) return;
+
+                if (!query || !query.trim()) {
+                    dropdown.classList.add("hidden");
+                    dropdown.innerHTML = "";
+                    return;
+                }
+
+                if (!items.length) {
+                    dropdown.innerHTML = `<div class="px-4 py-3 text-xs text-slate-500 font-medium">No matching products for "${escapeHtml(query.trim())}"</div>`;
+                    dropdown.classList.remove("hidden");
+                    return;
+                }
+
+                dropdown.innerHTML = items.slice(0, 6).map((p) => `
+          <button type="button" data-search-pick="${escapeHtml(p.name)}"
+            class="w-full px-4 py-2.5 hover:bg-slate-50 flex items-center justify-between gap-3 text-left transition-colors">
+            <div class="flex items-center gap-3 min-w-0">
+              <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}"
+                class="w-10 h-10 rounded-lg object-contain bg-slate-100 p-1 shrink-0" />
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-slate-900 truncate">${escapeHtml(p.name)}</div>
+                <div class="text-xs text-slate-500 truncate">in ${escapeHtml(p.category)} &bull; ${escapeHtml(p.city)}</div>
+              </div>
+            </div>
+            <span class="text-sm font-extrabold text-emerald-600 tabular-nums shrink-0">${formatCurrency(p.price)}</span>
+          </button>
+        `).join("");
+
+                bindImageFallbacks(dropdown);
+                dropdown.classList.remove("hidden");
+            }
+
+            async function syncProductsFromBackend(query = "", showDropdown = false) {
+                try {
+                    const params = new URLSearchParams();
+                    if (query && query.trim()) params.set("q", query.trim());
+                    const res = await fetch(`/api/search?${params.toString()}`);
+                    if (!res.ok) throw new Error("Failed to fetch /api/search");
+                    const rows = await res.json();
+                    const mapped = rows.map(mapDbProductToUI);
+
+                    PRODUCTS.length = 0;
+                    mapped.forEach((p) => PRODUCTS.push(p));
+
+                    if (!query.trim() && ALL_PRODUCTS.length === 0) {
+                        mapped.forEach((p) => ALL_PRODUCTS.push(p));
+                        refreshRecommendations();
+                    }
+
+                    const recDash = document.getElementById("recommendationDashboard");
+                    if (recDash) recDash.classList.toggle("hidden", query.trim().length > 0 || state.category === "Fashion");
+
+                    syncAllViews();
+                    if (showDropdown) renderSearchDropdown(query, mapped);
+                    else document.getElementById("searchDropdown").classList.add("hidden");
+                } catch (err) {
+                    showToast("Could not connect to backend /api/search", "warn");
+                }
+            }
+
+            /* ---------------- RECOMMENDATION ENGINE ---------------- */
+            function recordUserSignal(type, product) {
+                if (!product) return;
+                state.signals.preferredCategories[product.category] = (state.signals.preferredCategories[product.category] || 0) + 2;
+                state.signals.lastTrigger = type === "cart" ? `Updated after adding ${product.name}` : `Tuned from your 3D view of ${product.name}`;
+                refreshRecommendations();
+            }
+
+            function computeRecommendations() {
+                const source = ALL_PRODUCTS.length ? ALL_PRODUCTS : PRODUCTS;
+                if (!source.length) return [];
+                const scored = source.map((p) => {
+                    const savings = Math.max(0, p.oldPrice - p.price);
+                    let score = 88 + (state.signals.preferredCategories[p.category] || 0) * 2;
+                    if (p.inventory_count <= 0) score -= 25;
+                    return { product: p, matchPct: Math.min(99, Math.max(80, score)), reason: p.inventory_count <= 3 ? "Low Stock Alert" : `Ships from ${p.city}`, savings };
+                });
+                scored.sort((a, b) => b.matchPct - a.matchPct);
+                return scored.slice(0, 4);
+            }
+
+            function renderSpotlight(animate) {
+                const card = document.getElementById("recSpotlightCard");
+                const recItem = state.rec.items[state.rec.activeIndex];
+                if (!card || !recItem) { if (card) card.innerHTML = ""; return; }
+                const { product: p, matchPct, reason, savings } = recItem;
+                card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 ${animate ? "animate-spotlight-morph" : ""}">
+            <div>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/35 text-blue-200 text-[10px] font-extrabold uppercase">${escapeHtml(reason)}</span>
+              <div class="text-[11px] font-bold text-slate-400 mt-1">${escapeHtml(p.category)} &middot; ${p.inventory_count} in stock</div>
+            </div>
+            <span class="text-xs font-extrabold text-blue-300 bg-white/10 px-2.5 py-1 rounded-full">${matchPct}% Match</span>
+          </div>
+          <div class="relative h-44 flex items-center justify-center my-1">
+            <button type="button" data-action="inspect-3d" data-id="${p.id}" class="h-full w-full flex items-center justify-center">
+              <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-[85%] object-contain rounded-xl animate-float-product" />
+            </button>
+          </div>
+          <div class="flex flex-col gap-3">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white line-clamp-1">${escapeHtml(p.name)}</h3>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xl font-extrabold text-white tabular-nums">${formatCurrency(p.price)}</span>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">Save ${formatCurrency(savings)}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" data-action="inspect-3d" data-id="${p.id}" class="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">view_in_ar</span><span>Open Real 3D</span>
+              </button>
+              <button type="button" data-action="add-to-cart" data-id="${p.id}" class="py-2.5 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold">+ Quick Add</button>
+            </div>
+          </div>`;
+                bindImageFallbacks(card);
+                const counter = document.getElementById("recCycleCounter");
+                if (counter) counter.textContent = `${state.rec.activeIndex + 1} / ${state.rec.items.length}`;
+            }
+
+            function renderRecommendationCards() {
+                const grid = document.getElementById("recCardsGrid");
+                if (!grid) return;
+                grid.innerHTML = state.rec.items.map((item, idx) => {
+                    const p = item.product;
+                    const isActive = idx === state.rec.activeIndex;
+                    return `
+            <div data-rec-select="${idx}" class="rec-card-sheen relative overflow-hidden cursor-pointer rounded-xl p-3.5 border transition-all flex items-center gap-3 ${isActive ? "bg-blue-600/20 border-blue-400/70" : "bg-white/[0.05] hover:bg-white/[0.1] border-white/10"}">
+              <div class="w-16 h-16 rounded-xl bg-white/95 p-1.5 flex items-center justify-center shrink-0">
+                <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-full object-contain rounded" />
+              </div>
+              <div class="flex-1 min-w-0 flex flex-col gap-1">
+                <span class="text-[10px] font-extrabold text-blue-200 truncate">${escapeHtml(item.reason)}</span>
+                <h4 class="text-xs font-bold text-white line-clamp-1">${escapeHtml(p.name)}</h4>
+                <div class="flex items-center justify-between gap-2 mt-0.5">
+                  <span class="text-sm font-extrabold text-white tabular-nums">${formatCurrency(p.price)}</span>
+                  <div class="flex items-center gap-1">
+                    <button type="button" data-action="inspect-3d" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-blue-500 text-white text-[10px] font-bold">3D</button>
+                    <button type="button" data-action="add-to-cart" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold">+ Cart</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+                }).join("");
+                bindImageFallbacks(grid);
+            }
+
+            function refreshRecommendations() {
+                state.rec.items = computeRecommendations();
+                if (state.rec.activeIndex >= state.rec.items.length) state.rec.activeIndex = 0;
+                state.rec.progress = 0;
+                const sub = document.getElementById("recContextSubtitle");
+                if (sub) sub.textContent = state.signals.lastTrigger;
+                if (state.rec.items.length) {
+                    const avgSave = Math.round(state.rec.items.reduce((s, x) => s + x.savings, 0) / state.rec.items.length);
+                    document.getElementById("recSavingsMetric").textContent = formatCurrency(avgSave);
+                }
+                renderSpotlight(true);
+                renderRecommendationCards();
+            }
+
+            function startRecommendationTicker() {
+                if (state.rec.timerId) clearInterval(state.rec.timerId);
+                state.rec.timerId = setInterval(() => {
+                    if (!state.rec.autoPlay || state.rec.isHovered || state.rec.collapsed || state.rec.items.length <= 1) return;
+                    state.rec.progress += 2;
+                    const bar = document.getElementById("recCycleProgress");
+                    if (bar) bar.style.width = `${Math.min(100, state.rec.progress)}%`;
+                    if (state.rec.progress >= 100) {
+                        state.rec.progress = 0;
+                        state.rec.activeIndex = (state.rec.activeIndex + 1) % state.rec.items.length;
+                        renderSpotlight(true);
+                        renderRecommendationCards();
+                    }
+                }, 120);
+            }
+
+            /* ---------------- FILTERING & RENDERING ---------------- */
+            function getFilteredProducts() {
+                const filtered = PRODUCTS.filter((p) => {
+                    if (state.category !== "all" && p.category !== state.category) return false;
+                    return true;
+                });
+                if (state.sort === "price-asc") filtered.sort((a, b) => a.price - b.price);
+                if (state.sort === "price-desc") filtered.sort((a, b) => b.price - a.price);
+                if (state.sort === "rating") filtered.sort((a, b) => b.rating - a.rating);
+                if (state.sort === "discount") filtered.sort((a, b) => (b.oldPrice - b.price) - (a.oldPrice - a.price));
+                if (state.sort === "newest") filtered.sort((a, b) => b.dbId - a.dbId);
+                return filtered;
+            }
+
+            function renderTopNavAndFashionHub() {
+                const subNav = document.getElementById("subNav");
+                if (subNav) {
+                    subNav.classList.toggle("hidden", !state.headerCatsVisible);
+                    subNav.classList.toggle("flex", state.headerCatsVisible);
+                    subNav.querySelectorAll(".nav-pill").forEach((btn) => {
+                        const isAct = btn.dataset.nav === state.category;
+                        btn.className = isAct
+                            ? "nav-pill px-3 py-1.5 rounded-lg bg-blue-50 text-primary font-bold transition-colors"
+                            : "nav-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-primary hover:bg-slate-100 transition-colors";
+                    });
+                }
+                document.getElementById("toggleHeaderCatsLabel").textContent = state.headerCatsVisible ? "Hide Categories" : "Show Categories";
+                document.getElementById("toggleHeaderCatsChevron").style.transform = state.headerCatsVisible ? "rotate(180deg)" : "rotate(0deg)";
+
+                const fHub = document.getElementById("fashionHub");
+                const recDash = document.getElementById("recommendationDashboard");
+                const showFashion = state.category === "Fashion";
+                if (fHub) {
+                    fHub.classList.toggle("hidden", !showFashion);
+                    fHub.classList.toggle("flex", showFashion);
+                }
+                if (recDash) {
+                    recDash.classList.toggle("hidden", showFashion || state.search.trim().length > 0);
+                }
+                document.getElementById("headerDeptSelect").value = state.category;
+                document.getElementById("breadcrumbCurrent").textContent = state.category === "all" ? "All Categories" : state.category;
+            }
+
+            function renderActiveChips() {
+                const container = document.getElementById("activeChipsContainer");
+                const chips = [];
+                if (state.search.trim()) chips.push({ key: "search", label: `Search: "${state.search.trim()}"` });
+                if (state.category !== "all") chips.push({ key: "category", label: state.category });
+                container.innerHTML = chips.length === 0
+                    ? `<span class="text-xs text-slate-500 font-medium">Showing live OpenSearch inventory &middot; Try searching related words like "dress", "jacket", "music", "wfh", or "mobile"</span>`
+                    : chips.map((c) => `<button type="button" data-remove-chip="${escapeHtml(c.key)}" class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-white text-xs font-bold"><span>${escapeHtml(c.label)}</span><span class="material-symbols-outlined text-[14px]">close</span></button>`).join("") + `<button type="button" id="clearAllChipsBtn" class="text-xs font-bold text-primary hover:underline ml-1">Clear all</button>`;
+            }
+
+            function renderProducts() {
+                const filtered = getFilteredProducts();
+                const total = filtered.length;
+                const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+                if (state.page > totalPages) state.page = totalPages;
+                const startIdx = (state.page - 1) * state.perPage;
+                const pageItems = filtered.slice(startIdx, startIdx + state.perPage);
+
+                const qText = state.search.trim() ? ` for <span class="font-bold text-primary">&lsquo;${escapeHtml(state.search.trim())}&rsquo;</span>` : "";
+                document.getElementById("resultsSummary").innerHTML = `Showing <span class="font-bold text-slate-900">${total ? startIdx + 1 : 0}–${Math.min(startIdx + state.perPage, total)}</span> of <span class="font-bold text-slate-900">${total}</span> live results${qText}`;
+
+                const grid = document.getElementById("productGrid");
+                const empty = document.getElementById("emptyState");
+                if (total === 0) {
+                    grid.innerHTML = ""; grid.classList.add("hidden"); empty.classList.remove("hidden"); empty.classList.add("flex");
+                    return;
+                }
+                grid.classList.remove("hidden"); empty.classList.add("hidden"); empty.classList.remove("flex");
+                const isList = state.viewMode === "list";
+                grid.className = isList ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+
+                grid.innerHTML = pageItems.map((p) => {
+                    const isSaved = state.wishlist.has(p.id);
+                    const out = p.inventory_count <= 0;
+                    const bClass = p.badgeType === "rose" ? "bg-rose-600 text-white" : "bg-amber-500 text-white";
+                    return `
+            <article class="bg-white rounded-2xl border border-slate-200/80 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all overflow-hidden group flex ${isList ? "flex-col sm:flex-row" : "flex-col"}">
+              <div class="relative bg-slate-100/80 p-5 flex items-center justify-center overflow-hidden ${isList ? "h-56 sm:h-auto sm:w-64 shrink-0" : "h-56"}">
+                <span class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg ${bClass} text-[10px] font-extrabold uppercase shadow-sm">${escapeHtml(p.badge)}</span>
+                <button type="button" data-action="toggle-wishlist" data-id="${p.id}" class="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/95 shadow-sm flex items-center justify-center ${isSaved ? "text-rose-500" : "text-slate-400"}">
+                  <span class="material-symbols-outlined text-[18px] ${isSaved ? "star-filled" : ""}">favorite</span>
+                </button>
+                <button type="button" data-action="inspect-3d" data-id="${p.id}" class="absolute top-3 right-3 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 hover:bg-primary hover:text-white text-primary text-[11px] font-extrabold shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">view_in_ar</span><span>Real 3D · AR</span>
+                </button>
+                <button type="button" data-action="inspect-3d" data-id="${p.id}" class="w-full h-full flex items-center justify-center">
+                  <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
+                </button>
+              </div>
+              <div class="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3">
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between text-[11px] font-bold">
+                    <span class="uppercase text-primary">${escapeHtml(p.category)}</span>
+                    <span class="text-slate-400">📍 ${escapeHtml(p.city)}</span>
+                  </div>
+                  <h2 class="text-sm sm:text-[15px] font-extrabold text-slate-900 line-clamp-2 cursor-pointer hover:text-primary" data-action="inspect-3d" data-id="${p.id}">${escapeHtml(p.name)}</h2>
+                  <div class="flex items-center gap-1.5">
+                    <span class="flex items-center text-amber-500">${renderStarsHtml(p.rating, 15)}</span>
+                    <span class="text-xs font-bold">${p.rating.toFixed(1)}</span>
+                    <span class="text-xs text-slate-400">(${p.reviews})</span>
+                  </div>
+                  <div class="flex items-baseline gap-2 mt-1">
+                    <span class="text-xl font-extrabold text-slate-900 tabular-nums">${formatCurrency(p.price)}</span>
+                    <span class="text-xs text-slate-400 line-through tabular-nums">${formatCurrency(p.oldPrice)}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                  <button type="button" data-action="add-to-cart" data-id="${p.id}" ${out ? "disabled" : ""} class="flex-1 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover disabled:bg-slate-300 text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span><span>${out ? "Sold Out" : "Add to Cart"}</span>
+                  </button>
+                  <button type="button" data-action="inspect-3d" data-id="${p.id}" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] text-primary">360</span><span>Real 3D</span>
+                  </button>
+                </div>
+              </div>
+            </article>`;
+                }).join("");
+                bindImageFallbacks(grid);
+                document.getElementById("paginationBar").innerHTML = `<span class="text-xs font-bold text-slate-500">Page ${state.page} of ${totalPages}</span>`;
+            }
+
+            function syncAllViews() { renderTopNavAndFashionHub(); renderActiveChips(); renderProducts(); }
+
+            /* ---------------- CART, WISHLIST & ORDERS ---------------- */
+            function getCartTotals() {
+                const subtotal = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
+                const discount = state.promoCode === "HYPER10" ? subtotal * 0.1 : 0;
+                const discounted = Math.max(0, subtotal - discount);
+                const tax = discounted * 0.18;
+                return { subtotal, discount, tax, total: discounted + tax, count: state.cart.reduce((s, i) => s + i.qty, 0) };
+            }
+
+            function renderCart() {
+                const { subtotal, discount, tax, total, count } = getCartTotals();
+                document.getElementById("cartCount").textContent = String(count);
+                document.getElementById("cartTotal").textContent = formatCurrency(subtotal);
+                document.getElementById("drawerCartBadge").textContent = String(count);
+                document.getElementById("summarySubtotal").textContent = formatCurrency(subtotal);
+                document.getElementById("summaryTax").textContent = formatCurrency(tax);
+                document.getElementById("summaryTotal").textContent = formatCurrency(total);
+
+                const promoRow = document.getElementById("promoAppliedRow");
+                const discRow = document.getElementById("summaryDiscountRow");
+                const hasPromo = state.promoCode === "HYPER10";
+                promoRow.classList.toggle("hidden", !hasPromo); promoRow.classList.toggle("flex", hasPromo);
+                discRow.classList.toggle("hidden", !hasPromo); discRow.classList.toggle("flex", hasPromo);
+                if (hasPromo) document.getElementById("summaryDiscount").textContent = `-${formatCurrency(discount)}`;
+
+                const list = document.getElementById("cartItemsList");
+                list.innerHTML = state.cart.length === 0
+                    ? `<div class="text-center py-12 text-xs text-slate-500 font-semibold">Your cart is empty.</div>`
+                    : state.cart.map((item) => `
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white">
+                <img src="${escapeHtml(item.image)}" class="w-14 h-14 rounded-xl bg-slate-100 p-1 object-contain" />
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-xs font-extrabold truncate">${escapeHtml(item.name)}</h4>
+                  <div class="text-sm font-extrabold text-primary mt-0.5">${formatCurrency(item.price)}</div>
+                  <div class="flex items-center justify-between mt-2">
+                    <div class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50">
+                      <button type="button" data-cart-dec="${item.id}" class="px-2 py-0.5 font-bold">−</button>
+                      <span class="px-2.5 text-xs font-extrabold">${item.qty}</span>
+                      <button type="button" data-cart-inc="${item.id}" class="px-2 py-0.5 font-bold">+</button>
+                    </div>
+                    <button type="button" data-cart-remove="${item.id}" class="text-[11px] font-bold text-rose-600 hover:underline">Remove</button>
+                  </div>
+                </div>
+              </div>`).join("");
+            }
+
+            function addProductToCart(id) {
+                const prod = PRODUCTS.find((p) => p.id === id) || ALL_PRODUCTS.find((p) => p.id === id);
+                if (!prod || prod.inventory_count <= 0) return showToast("Item is out of stock", "warn");
+                const existing = state.cart.find((c) => c.id === prod.id);
+                if (existing) {
+                    if (existing.qty >= prod.inventory_count) return showToast(`Only ${prod.inventory_count} left in stock`, "warn");
+                    existing.qty += 1;
+                } else {
+                    state.cart.unshift({ id: prod.id, name: prod.name, price: prod.price, qty: 1, image: prod.image });
+                }
+                renderCart();
+                recordUserSignal("cart", prod);
+                showToast(`Added ${prod.name} to cart`, "success");
+            }
+
+            function renderWishlist() {
+                const badge = document.getElementById("wishlistBadge");
+                badge.textContent = String(state.wishlist.size);
+                badge.classList.toggle("hidden", state.wishlist.size === 0);
+                badge.classList.toggle("flex", state.wishlist.size > 0);
+                const source = ALL_PRODUCTS.length ? ALL_PRODUCTS : PRODUCTS;
+                const saved = source.filter((p) => state.wishlist.has(p.id));
+                document.getElementById("wishlistItemsList").innerHTML = saved.length
+                    ? saved.map((p) => `
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white">
+                <img src="${escapeHtml(p.image)}" class="w-14 h-14 rounded-xl bg-slate-100 p-1 object-contain" />
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-xs font-extrabold truncate">${escapeHtml(p.name)}</h4>
+                  <div class="text-sm font-extrabold text-primary">${formatCurrency(p.price)}</div>
+                  <button type="button" data-action="add-to-cart" data-id="${p.id}" class="mt-1.5 px-3 py-1 rounded-lg bg-primary text-white text-[11px] font-bold">Add to Cart</button>
+                </div>
+              </div>`).join("")
+                    : `<div class="text-center py-12 text-xs text-slate-500">No saved items yet.</div>`;
+            }
+
+            function openDrawer(ov, dr) { document.getElementById(ov).classList.remove("hidden"); requestAnimationFrame(() => document.getElementById(dr).classList.remove("translate-x-full")); }
+            function closeDrawer(ov, dr) { document.getElementById(dr).classList.add("translate-x-full"); setTimeout(() => document.getElementById(ov).classList.add("hidden"), 250); }
+            function openUtilityModal(title, html) { document.getElementById("utilityModalTitle").textContent = title; document.getElementById("utilityModalBody").innerHTML = html; const m = document.getElementById("utilityModal"); m.classList.remove("hidden"); m.classList.add("flex"); }
+            function closeUtilityModal() { const m = document.getElementById("utilityModal"); m.classList.add("hidden"); m.classList.remove("flex"); }
+
+            async function openOrdersView() {
+                openUtilityModal("My Orders & Live Status", `<div class="text-xs text-slate-500">Loading orders...</div>`);
+                try {
+                    const res = await fetch("/api/orders");
+                    const orders = await res.json();
+                    const savedMeta = JSON.parse(localStorage.getItem("hypermart_order_meta") || "[]");
+
+                    const html = orders.length
+                        ? orders.map((o, idx) => {
+                            const meta = savedMeta[idx] || {};
+                            const status = meta.status || "Order Confirmed";
+                            const payment = meta.payment || "Paid Online";
+                            const address = meta.address || `${o.city} Warehouse Dispatch`;
+                            return `
+                  <div class="p-3.5 rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col gap-2 text-xs">
+                    <div class="flex justify-between items-start gap-2">
+                      <div>
+                        <div class="font-extrabold text-slate-900">#HM-${o.id} · ${escapeHtml(o.name)} (×${o.quantity})</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${new Date(o.order_date).toLocaleString("en-IN")}</div>
+                      </div>
+                      <div class="text-right">
+                        <div class="font-extrabold text-primary text-sm">${formatCurrency(o.price * o.quantity)}</div>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold">${escapeHtml(status)}</span>
+                      </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px] text-slate-600">
+                      <div><span class="font-bold text-slate-800">Payment:</span> ${escapeHtml(payment)}</div>
+                      <div><span class="font-bold text-slate-800">Deliver to:</span> ${escapeHtml(address)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-1 text-[10px] font-bold text-emerald-600">
+                      <span>● Order Placed</span>
+                      <span class="flex-1 h-0.5 bg-emerald-500"></span>
+                      <span>● Confirmed</span>
+                      <span class="flex-1 h-0.5 bg-slate-200"></span>
+                      <span class="text-slate-400">○ Out for Delivery</span>
+                    </div>
+                  </div>`;
+                        }).join("")
+                        : `<div class="text-xs text-slate-500 text-center py-6">No orders placed yet.</div>`;
+                    document.getElementById("utilityModalBody").innerHTML = `<div class="flex flex-col gap-3">${html}</div>`;
+                } catch {
+                    document.getElementById("utilityModalBody").innerHTML = `<div class="text-xs text-rose-600">Failed to load orders.</div>`;
+                }
+            }
+
+            /* ---------------- THREE.JS REALISTIC 360° PBR ENGINE ---------------- */
+            const studio3D = {
+                open: false, viewMode: "solid", activeProduct: null, activeHex: "#2563eb", autoRotate: true, arMode: false,
+                explodeFactor: 0, targetExplode: 0, layers: [], textures: [], scene: null, camera: null, renderer: null,
+                envTexture: null, productGroup: null, turntableGroup: null, deskGroup: null,
+                rotX: 0.24, rotY: -0.58, targetRotX: 0.24, targetRotY: -0.58,
+                zoom: 4.4, targetZoom: 4.4, isDragging: false, prevX: 0, prevY: 0, rafId: null
+            };
+
+            function disposeProductGroup(group) {
+                group.traverse((obj) => {
+                    if (obj.isMesh) {
+                        if (obj.geometry) obj.geometry.dispose();
+                        if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+                        else if (obj.material) obj.material.dispose();
+                    }
+                });
+                while (group.children.length > 0) group.remove(group.children[0]);
+                studio3D.textures.forEach((t) => t && t.dispose && t.dispose());
+                studio3D.textures = [];
+            }
+
+            function makeRoundedBox(w, h, d, r = 0.08, bevel = 0.025) {
+                const s = new THREE.Shape();
+                const x = -(w - bevel * 2) / 2, y = -(h - bevel * 2) / 2;
+                const rw = w - bevel * 2, rh = h - bevel * 2;
+                const rad = Math.min(r, rw / 2, rh / 2);
+                s.moveTo(x + rad, y);
+                s.lineTo(x + rw - rad, y); s.quadraticCurveTo(x + rw, y, x + rw, y + rad);
+                s.lineTo(x + rw, y + rh - rad); s.quadraticCurveTo(x + rw, y + rh, x + rw - rad, y + rh);
+                s.lineTo(x + rad, y + rh); s.quadraticCurveTo(x, y + rh, x, y + rh - rad);
+                s.lineTo(x, y + rad); s.quadraticCurveTo(x, y, x + rad, y);
+                const geo = new THREE.ExtrudeGeometry(s, {
+                    depth: Math.max(0.01, d - bevel * 2), bevelEnabled: true,
+                    bevelThickness: bevel, bevelSize: bevel, bevelSegments: 4, curveSegments: 16
+                });
+                geo.center();
+                return geo;
+            }
+
+            function makeScreenTex(title, subtitle, accent = "#38bdf8", w = 512, h = 512) {
+                const c = document.createElement("canvas"); c.width = w; c.height = h;
+                const ctx = c.getContext("2d");
+                const g = ctx.createLinearGradient(0, 0, w, h);
+                g.addColorStop(0, "#020617"); g.addColorStop(0.5, "#1e3a8a"); g.addColorStop(1, "#0f172a");
+                ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+                const orb = ctx.createRadialGradient(w * 0.3, h * 0.35, 10, w * 0.3, h * 0.35, w * 0.5);
+                orb.addColorStop(0, accent); orb.addColorStop(1, "rgba(0,0,0,0)");
+                ctx.globalAlpha = 0.45; ctx.fillStyle = orb; ctx.fillRect(0, 0, w, h); ctx.globalAlpha = 1;
+                ctx.fillStyle = "#ffffff"; ctx.textAlign = "center";
+                ctx.font = `800 ${Math.round(h * 0.14)}px 'Plus Jakarta Sans', sans-serif`;
+                ctx.fillText(title, w / 2, h * 0.48);
+                ctx.fillStyle = "#93c5fd";
+                ctx.font = `600 ${Math.round(h * 0.065)}px 'Plus Jakarta Sans', sans-serif`;
+                ctx.fillText(subtitle, w / 2, h * 0.62);
+                const tex = new THREE.CanvasTexture(c);
+                studio3D.textures.push(tex);
+                return tex;
+            }
+
+            function makeKeyboardTex() {
+                const c = document.createElement("canvas"); c.width = 1024; c.height = 384;
+                const ctx = c.getContext("2d");
+                ctx.fillStyle = "#0b0f19"; ctx.fillRect(0, 0, 1024, 384);
+                const rows = [14, 14, 13, 12, 8];
+                rows.forEach((cols, r) => {
+                    const y = 18 + r * 70, kw = (984 - (cols - 1) * 10) / cols;
+                    for (let i = 0; i < cols; i++) {
+                        const x = 20 + i * (kw + 10);
+                        ctx.fillStyle = `hsla(${(i * 25 + r * 40) % 360}, 95%, 60%, 0.75)`;
+                        ctx.fillRect(x - 1, y - 1, kw + 2, 58);
+                        ctx.fillStyle = "#181e2c";
+                        ctx.fillRect(x + 2, y + 2, kw - 4, 52);
+                    }
+                });
+                const tex = new THREE.CanvasTexture(c);
+                studio3D.textures.push(tex);
+                return tex;
+            }
+
+            function initThreeStudio() {
+                if (studio3D.renderer || typeof THREE === "undefined") return;
+                const container = document.getElementById("threeCanvasContainer");
+                const w = Math.max(container.clientWidth, 480), h = Math.max(container.clientHeight, 380);
+                studio3D.scene = new THREE.Scene();
+                studio3D.camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+                studio3D.camera.position.set(0, 0.4, studio3D.zoom);
+
+                studio3D.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+                studio3D.renderer.setSize(w, h);
+                studio3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                studio3D.renderer.outputEncoding = THREE.sRGBEncoding;
+                studio3D.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                studio3D.renderer.toneMappingExposure = 1.2;
+                container.innerHTML = "";
+                container.appendChild(studio3D.renderer.domElement);
+
+                const pmrem = new THREE.PMREMGenerator(studio3D.renderer);
+                const envScene = new THREE.Scene(); envScene.background = new THREE.Color(0x0f172a);
+                const addSoftbox = (col, pos, size) => {
+                    const m = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), new THREE.MeshBasicMaterial({ color: col }));
+                    m.position.set(...pos); m.lookAt(0, 0, 0); envScene.add(m);
+                };
+                addSoftbox(0xffffff, [0, 7, 6], [14, 6]);
+                addSoftbox(0x60a5fa, [-9, 3, -5], [10, 5]);
+                addSoftbox(0xfef3c7, [9, 2, -4], [8, 4]);
+                studio3D.envTexture = pmrem.fromScene(envScene, 0.04).texture;
+                studio3D.scene.environment = studio3D.envTexture;
+                pmrem.dispose();
+
+                studio3D.scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.15));
+                const key = new THREE.DirectionalLight(0xffffff, 1.55); key.position.set(4.5, 6.5, 5.5); studio3D.scene.add(key);
+                const rim = new THREE.DirectionalLight(0x60a5fa, 1.15); rim.position.set(-4.5, 3.5, -5.5); studio3D.scene.add(rim);
+
+                studio3D.productGroup = new THREE.Group();
+                studio3D.scene.add(studio3D.productGroup);
+
+                studio3D.turntableGroup = new THREE.Group();
+                const ring = new THREE.Mesh(new THREE.RingGeometry(1.45, 1.52, 64), new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+                ring.rotation.x = -Math.PI / 2; ring.position.y = -1.35;
+                const disc = new THREE.Mesh(new THREE.CircleGeometry(1.44, 64), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.6, transparent: true, opacity: 0.5 }));
+                disc.rotation.x = -Math.PI / 2; disc.position.y = -1.36;
+                studio3D.turntableGroup.add(ring, disc);
+                studio3D.scene.add(studio3D.turntableGroup);
+
+                studio3D.deskGroup = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshStandardMaterial({ color: 0xb88e62, roughness: 0.72 }));
+                studio3D.deskGroup.rotation.x = -Math.PI / 2; studio3D.deskGroup.position.y = -1.36; studio3D.deskGroup.visible = false;
+                studio3D.scene.add(studio3D.deskGroup);
+            }
+
+            function set3DModeUI(mode) {
+                studio3D.viewMode = mode;
+                studio3D.targetExplode = mode === "exploded" ? 1 : 0;
+                const map = { solid: "modeStudio3DBtn", exploded: "modeExploded3DBtn", wireframe: "modeWireframe3DBtn" };
+                Object.entries(map).forEach(([k, id]) => {
+                    const btn = document.getElementById(id);
+                    if (!btn) return;
+                    btn.className = k === mode
+                        ? "px-3 py-1 rounded-full bg-primary text-white text-[11px] font-extrabold flex items-center gap-1 transition-all"
+                        : "px-3 py-1 rounded-full text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1 transition-all";
+                });
+            }
+
+            function rebuildStudioPrototype() {
+                if (!studio3D.productGroup || !studio3D.activeProduct) return;
+                disposeProductGroup(studio3D.productGroup);
+                studio3D.layers = [];
+
+                const p = studio3D.activeProduct;
+                const isWire = studio3D.viewMode === "wireframe";
+
+                const col = new THREE.Color(studio3D.activeHex || "#2563eb");
+                const bodyMat = new THREE.MeshPhysicalMaterial({ color: col, metalness: 0.55, roughness: 0.2, clearcoat: 0.75, clearcoatRoughness: 0.12, wireframe: isWire });
+                const darkMat = new THREE.MeshPhysicalMaterial({ color: 0x0f172a, metalness: 0.5, roughness: 0.35, clearcoat: 0.25, wireframe: isWire });
+                const chromeMat = new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.1, clearcoat: 0.5, wireframe: isWire });
+                const rubberMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, metalness: 0.05, wireframe: isWire });
+                const whiteGloss = new THREE.MeshPhysicalMaterial({ color: 0xf8fafc, metalness: 0.1, roughness: 0.12, clearcoat: 0.9, wireframe: isWire });
+                const ledMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+
+                const addL = (obj, off = [0, 0, 0]) => {
+                    studio3D.productGroup.add(obj);
+                    studio3D.layers.push({ mesh: obj, base: obj.position.clone(), off: new THREE.Vector3(...off) });
+                };
+
+                const mt = p.modelType;
+
+                if (mt === "earbuds") {
+                    const caseBase = new THREE.Group();
+                    const lower = new THREE.Mesh(makeRoundedBox(1.55, 0.95, 0.65, 0.26, 0.05), bodyMat);
+                    lower.position.y = -0.35;
+                    const innerTray = new THREE.Mesh(makeRoundedBox(1.38, 0.12, 0.52, 0.2, 0.02), darkMat);
+                    innerTray.position.y = 0.1;
+                    const led = new THREE.Mesh(new THREE.SphereGeometry(0.032, 16, 16), ledMat);
+                    led.position.set(0, -0.15, 0.33);
+                    const usb = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.08), chromeMat);
+                    usb.position.set(0, -0.82, 0);
+                    caseBase.add(lower, innerTray, led, usb);
+                    addL(caseBase, [0, -0.45, 0]);
+
+                    const lidGrp = new THREE.Group();
+                    const lid = new THREE.Mesh(makeRoundedBox(1.55, 0.42, 0.65, 0.26, 0.05), bodyMat);
+                    lid.position.set(0, 0.42, -0.42); lid.rotation.x = -1.15;
+                    const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 16), chromeMat);
+                    hinge.rotation.z = Math.PI / 2; hinge.position.set(0, 0.12, -0.32);
+                    lidGrp.add(lid, hinge);
+                    addL(lidGrp, [0, 0.45, -0.45]);
+
+                    [-0.36, 0.36].forEach((xPos, idx) => {
+                        const bud = new THREE.Group();
+                        const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), whiteGloss);
+                        head.scale.set(1.05, 0.95, 1.15);
+                        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.58, 18), whiteGloss);
+                        stem.position.set(0, -0.32, 0.04); stem.rotation.x = 0.15;
+                        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.2, 20), rubberMat);
+                        tip.rotation.z = idx === 0 ? Math.PI / 2 : -Math.PI / 2;
+                        tip.position.set(idx === 0 ? -0.22 : 0.22, 0, 0.05);
+                        const mic = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.04), darkMat);
+                        mic.position.set(idx === 0 ? 0.15 : -0.15, 0.02, 0.12);
+                        const contact = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.05, 16), chromeMat);
+                        contact.position.set(0, -0.61, 0.08);
+                        bud.add(head, stem, tip, mic, contact);
+                        bud.position.set(xPos, 0.48, 0.06);
+                        addL(bud, [idx === 0 ? -0.55 : 0.55, 0.55, 0.35]);
+                    });
+                } else if (mt === "headphones") {
+                    const band = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.1, 18, 48, Math.PI), bodyMat);
+                    band.position.y = 0.15;
+                    addL(band, [0, 0.5, 0]);
+                    [-0.95, 0.95].forEach((side) => {
+                        const cupGrp = new THREE.Group();
+                        const slider = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.45, 14), chromeMat);
+                        slider.position.y = 0.25;
+                        const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.26, 32), bodyMat);
+                        shell.rotation.z = Math.PI / 2; shell.position.set(side > 0 ? 0.08 : -0.08, -0.25, 0);
+                        const cushion = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.13, 18, 32), rubberMat);
+                        cushion.rotation.y = Math.PI / 2; cushion.position.set(side > 0 ? -0.06 : 0.06, -0.25, 0);
+                        const grille = new THREE.Mesh(new THREE.CircleGeometry(0.3, 24), darkMat);
+                        grille.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2; grille.position.set(side > 0 ? -0.04 : 0.04, -0.25, 0);
+                        cupGrp.add(slider, shell, cushion, grille);
+                        cupGrp.position.x = side;
+                        addL(cupGrp, [side > 0 ? 0.55 : -0.55, -0.1, 0]);
+                    });
+                } else if (mt === "watch") {
+                    const body = new THREE.Mesh(makeRoundedBox(1.05, 1.25, 0.26, 0.26, 0.04), bodyMat);
+                    addL(body, [0, 0, 0]);
+                    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.12, 20), chromeMat);
+                    crown.rotation.z = Math.PI / 2; crown.position.set(0.56, 0.2, 0);
+                    const btn = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.26, 0.08), chromeMat);
+                    btn.position.set(0.54, -0.2, 0);
+                    addL(crown, [0.4, 0, 0]); addL(btn, [0.4, 0, 0]);
+                    const scrTex = makeScreenTex("10:09", "72 BPM · 8,420 STEPS", "#38bdf8", 512, 512);
+                    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 1.05), new THREE.MeshBasicMaterial({ map: scrTex, wireframe: isWire }));
+                    screen.position.z = 0.135;
+                    addL(screen, [0, 0, 0.55]);
+                    const topStrap = new THREE.Mesh(makeRoundedBox(0.66, 1.05, 0.08, 0.1, 0.015), rubberMat);
+                    topStrap.position.set(0, 1.05, -0.16); topStrap.rotation.x = 0.35;
+                    const botStrap = new THREE.Mesh(makeRoundedBox(0.66, 1.05, 0.08, 0.1, 0.015), rubberMat);
+                    botStrap.position.set(0, -1.05, -0.16); botStrap.rotation.x = -0.35;
+                    addL(topStrap, [0, 0.55, -0.2]); addL(botStrap, [0, -0.55, -0.2]);
+                } else if (mt === "mouse") {
+                    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.85, 32, 24), bodyMat);
+                    shell.scale.set(0.78, 0.48, 1.32); shell.position.y = -0.15;
+                    addL(shell, [0, 0.35, 0]);
+                    const base = new THREE.Mesh(makeRoundedBox(1.22, 0.1, 2.05, 0.5, 0.02), darkMat);
+                    base.position.y = -0.45;
+                    addL(base, [0, -0.45, 0]);
+                    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 24), chromeMat);
+                    wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 0.22, -0.52);
+                    addL(wheel, [0, 0.65, -0.2]);
+                } else if (mt === "keyboard") {
+                    const deck = new THREE.Mesh(makeRoundedBox(2.9, 0.16, 1.15, 0.08, 0.02), bodyMat);
+                    deck.rotation.x = 0.14;
+                    addL(deck, [0, -0.35, 0]);
+                    const keys = new THREE.Mesh(new THREE.PlaneGeometry(2.72, 0.98), new THREE.MeshBasicMaterial({ map: makeKeyboardTex(), wireframe: isWire }));
+                    keys.rotation.x = -Math.PI / 2 + 0.14; keys.position.set(0, 0.095, -0.01);
+                    addL(keys, [0, 0.45, 0]);
+                } else if (mt === "monitor") {
+                    const panel = new THREE.Mesh(makeRoundedBox(2.8, 1.65, 0.09, 0.05, 0.015), darkMat);
+                    panel.position.y = 0.32;
+                    addL(panel, [0, 0.25, -0.2]);
+                    const scrTex = makeScreenTex("4K UHD HDR", "100% DCI-P3 · CREATOR PRO", "#60a5fa", 1024, 576);
+                    const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.66, 1.52), new THREE.MeshBasicMaterial({ map: scrTex, wireframe: isWire }));
+                    scr.position.set(0, 0.32, 0.052);
+                    addL(scr, [0, 0.25, 0.45]);
+                    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.15, 0.08), chromeMat);
+                    neck.position.set(0, -0.48, -0.14); neck.rotation.x = -0.12;
+                    const foot = new THREE.Mesh(makeRoundedBox(1.25, 0.06, 0.72, 0.08, 0.01), chromeMat);
+                    foot.position.set(0, -1.04, 0.02);
+                    addL(neck, [0, -0.25, -0.45]); addL(foot, [0, -0.55, 0]);
+                } else if (mt === "chair") {
+                    const seat = new THREE.Mesh(makeRoundedBox(1.38, 0.2, 1.25, 0.2, 0.04), bodyMat); seat.position.y = -0.25; addL(seat, [0, 0.15, 0.3]);
+                    const back = new THREE.Mesh(makeRoundedBox(1.3, 1.38, 0.14, 0.24, 0.03), bodyMat); back.position.set(0, 0.45, -0.58); back.rotation.x = -0.14; addL(back, [0, 0.35, -0.45]);
+                    const head = new THREE.Mesh(makeRoundedBox(0.7, 0.28, 0.14, 0.1, 0.03), darkMat); head.position.set(0, 1.28, -0.68); addL(head, [0, 0.75, -0.45]);
+                    [-0.75, 0.75].forEach((x) => {
+                        const arm = new THREE.Mesh(makeRoundedBox(0.14, 0.08, 0.75, 0.04, 0.01), darkMat);
+                        arm.position.set(x, 0.18, -0.05); addL(arm, [x > 0 ? 0.35 : -0.35, 0.2, 0]);
+                    });
+                    const baseGrp = new THREE.Group();
+                    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.78, 18), chromeMat); stem.position.y = -0.75; baseGrp.add(stem);
+                    for (let i = 0; i < 5; i++) {
+                        const a = (i / 5) * Math.PI * 2;
+                        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.85), chromeMat);
+                        leg.position.set(Math.sin(a) * 0.38, -1.12, Math.cos(a) * 0.38); leg.rotation.y = a; baseGrp.add(leg);
+                    }
+                    addL(baseGrp, [0, -0.5, 0]);
+                } else if (mt === "charger") {
+                    const brick = new THREE.Mesh(makeRoundedBox(1.15, 1.15, 0.78, 0.18, 0.04), bodyMat);
+                    addL(brick, [0, 0, 0]);
+                    const face = new THREE.Mesh(makeRoundedBox(0.95, 0.95, 0.05, 0.14, 0.01), darkMat);
+                    face.position.z = 0.39; addL(face, [0, 0, 0.5]);
+                    [-0.22, 0.02, 0.26].forEach((y) => {
+                        const port = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.09, 0.06), chromeMat);
+                        port.position.set(0, y, 0.41); addL(port, [0, 0, 0.65]);
+                    });
+                    [-0.25, 0.25].forEach((x) => {
+                        const prong = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.24, 0.42), chromeMat);
+                        prong.position.set(x, 0, -0.55); addL(prong, [0, 0, -0.5]);
+                    });
+                } else if (mt === "phone") {
+                    const frame = new THREE.Mesh(makeRoundedBox(1.22, 2.48, 0.16, 0.2, 0.025), bodyMat);
+                    addL(frame, [0, 0, 0]);
+                    const scrTex = makeScreenTex("09:41", "5G · 120Hz PRO OLED", "#38bdf8", 512, 1024);
+                    const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.34), new THREE.MeshBasicMaterial({ map: scrTex, wireframe: isWire }));
+                    scr.position.z = 0.085; addL(scr, [0, 0, 0.65]);
+                    const camGrp = new THREE.Group();
+                    const bump = new THREE.Mesh(makeRoundedBox(0.56, 0.56, 0.06, 0.12, 0.015), darkMat);
+                    bump.position.set(-0.24, 0.82, -0.09); camGrp.add(bump);
+                    [[-0.36, 0.94], [-0.36, 0.7], [-0.12, 0.82]].forEach(([cx, cy]) => {
+                        const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.07, 24), chromeMat);
+                        ring.rotation.x = Math.PI / 2; ring.position.set(cx, cy, -0.11); camGrp.add(ring);
+                    });
+                    addL(camGrp, [0, 0, -0.6]);
+                } else if (mt === "fashion") {
+                    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.36, 1.35, 32), bodyMat);
+                    torso.scale.set(1.15, 1, 0.62); torso.position.y = 0.2;
+                    addL(torso, [0, 0.25, 0]);
+                    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.24, 24), darkMat);
+                    collar.position.y = 0.95; addL(collar, [0, 0.6, 0]);
+                    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.95, 32), bodyMat);
+                    skirt.position.y = -0.65; addL(skirt, [0, -0.35, 0]);
+                } else {
+                    const baseGrp = new THREE.Group();
+                    const deck = new THREE.Mesh(makeRoundedBox(2.65, 0.09, 1.82, 0.1, 0.018), bodyMat);
+                    const kb = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.88), new THREE.MeshBasicMaterial({ map: makeKeyboardTex(), wireframe: isWire }));
+                    kb.rotation.x = -Math.PI / 2; kb.position.set(0, 0.048, -0.16);
+                    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.01, 0.52), darkMat);
+                    pad.position.set(0, 0.046, 0.58);
+                    baseGrp.add(deck, kb, pad); baseGrp.position.y = -0.6;
+                    addL(baseGrp, [0, -0.45, 0]);
+
+                    const lidGrp = new THREE.Group();
+                    const lid = new THREE.Mesh(makeRoundedBox(2.65, 1.72, 0.06, 0.1, 0.015), bodyMat);
+                    const scrTex = makeScreenTex("OLED 14 PRO", "STUDIO WORKSPACE · 120Hz", "#38bdf8", 1024, 640);
+                    const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.48, 1.54), new THREE.MeshBasicMaterial({ map: scrTex, wireframe: isWire }));
+                    scr.position.z = 0.036;
+                    lidGrp.add(lid, scr);
+                    lidGrp.position.set(0, 0.22, -0.96); lidGrp.rotation.x = -0.22;
+                    addL(lidGrp, [0, 0.5, -0.45]);
+                }
+            }
+
+            function animateStudioLoop() {
+                if (!studio3D.open) return;
+                studio3D.rafId = requestAnimationFrame(animateStudioLoop);
+                if (studio3D.autoRotate && !studio3D.isDragging) studio3D.targetRotY += 0.0085;
+                studio3D.rotY += (studio3D.targetRotY - studio3D.rotY) * 0.12;
+                studio3D.rotX += (studio3D.targetRotX - studio3D.rotX) * 0.12;
+                studio3D.zoom += (studio3D.targetZoom - studio3D.zoom) * 0.12;
+                studio3D.explodeFactor += (studio3D.targetExplode - studio3D.explodeFactor) * 0.1;
+                studio3D.layers.forEach((l) => l.mesh.position.set(
+                    l.base.x + l.off.x * studio3D.explodeFactor,
+                    l.base.y + l.off.y * studio3D.explodeFactor,
+                    l.base.z + l.off.z * studio3D.explodeFactor
+                ));
+                studio3D.productGroup.rotation.set(studio3D.rotX, studio3D.rotY, 0);
+                studio3D.camera.position.z = studio3D.zoom;
+                studio3D.renderer.render(studio3D.scene, studio3D.camera);
+            }
+
+            async function openInspectorModal(id) {
+                const p = PRODUCTS.find((item) => item.id === id) || ALL_PRODUCTS.find((item) => item.id === id);
+                if (!p) return;
+                studio3D.activeProduct = p; studio3D.activeHex = p.swatches[0].hex; studio3D.open = true;
+                studio3D.targetRotX = 0.24; studio3D.targetRotY = -0.58; studio3D.targetZoom = 4.4;
+                set3DModeUI("solid");
+
+                document.getElementById("modalBrand").textContent = p.category;
+                document.getElementById("modalTitle").textContent = p.name;
+                document.getElementById("modalPrice").textContent = formatCurrency(p.price);
+                document.getElementById("modalOldPrice").textContent = formatCurrency(p.oldPrice);
+                document.getElementById("modalSavings").textContent = `Save ${formatCurrency(p.oldPrice - p.price)}`;
+                document.getElementById("modalDesc").textContent = p.description;
+                document.getElementById("modalFinishLabel").textContent = p.swatches[0].name;
+                document.getElementById("modalSwatches").innerHTML = p.swatches.map((s) => `<button type="button" data-swatch-name="${escapeHtml(s.name)}" data-swatch-hex="${s.hex}" style="background:${s.hex}" class="swatch-btn w-7 h-7 rounded-full border-2 border-slate-300 hover:scale-110 transition-transform"></button>`).join("");
+                document.getElementById("modalSpecs").innerHTML = Object.entries(p.specs).map(([k, v]) => `<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80"><div class="text-[10px] font-bold uppercase text-slate-400">${k}</div><div class="text-xs font-extrabold mt-0.5">${escapeHtml(v)}</div></div>`).join("");
+                document.getElementById("modalAddToCartBtn").dataset.id = p.id;
+
+                const modal = document.getElementById("inspectorModal");
+                modal.classList.remove("hidden"); modal.classList.add("flex");
+                recordUserSignal("3d", p);
+
+                const mv = document.getElementById("realModelViewer");
+                const canvasBox = document.getElementById("threeCanvasContainer");
+                const modelPath = p.modelUrl || `/models/${p.modelType}.glb`;
+
+                let hasRealGlb = false;
+                try {
+                    const check = await fetch(modelPath, { method: "HEAD" });
+                    hasRealGlb = check.ok;
+                } catch { }
+
+                if (hasRealGlb && mv) {
+                    if (studio3D.rafId) cancelAnimationFrame(studio3D.rafId);
+                    canvasBox.classList.add("hidden");
+                    mv.classList.remove("hidden");
+                    mv.src = modelPath;
+                    mv.autoRotate = studio3D.autoRotate;
+                } else {
+                    if (mv) { mv.classList.add("hidden"); mv.removeAttribute("src"); }
+                    canvasBox.classList.remove("hidden");
+                    initThreeStudio(); rebuildStudioPrototype();
+                    if (studio3D.rafId) cancelAnimationFrame(studio3D.rafId);
+                    animateStudioLoop();
+                }
+            }
+
+            function closeInspectorModal() {
+                studio3D.open = false; cancelAnimationFrame(studio3D.rafId);
+                const mv = document.getElementById("realModelViewer");
+                if (mv) mv.removeAttribute("src");
+                const modal = document.getElementById("inspectorModal");
+                modal.classList.add("hidden"); modal.classList.remove("flex");
+            }
+
+            /* ---------------- EVENTS & SOCKET.IO ---------------- */
+            function resetAll() {
+                state.search = ""; state.category = "all";
+                document.getElementById("searchInput").value = "";
+                document.getElementById("clearSearchBtn").classList.add("hidden");
+                document.getElementById("searchDropdown").classList.add("hidden");
+                document.getElementById("headerDeptSelect").value = "all";
+                syncProductsFromBackend("", false);
+            }
+
+            function initEvents() {
+                document.getElementById("brandHomeBtn").addEventListener("click", resetAll);
+                document.getElementById("breadcrumbHome").addEventListener("click", resetAll);
+                document.getElementById("emptyResetBtn").addEventListener("click", resetAll);
+                document.getElementById("backToTopBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+                document.getElementById("toggleHeaderCatsBtn").addEventListener("click", () => { state.headerCatsVisible = !state.headerCatsVisible; renderTopNavAndFashionHub(); });
+
+                document.getElementById("subNav").addEventListener("click", (e) => {
+                    const b = e.target.closest(".nav-pill");
+                    if (!b) return;
+                    state.category = b.dataset.nav === "deals" ? "all" : b.dataset.nav;
+                    state.search = "";
+                    document.getElementById("searchInput").value = "";
+                    document.getElementById("clearSearchBtn").classList.add("hidden");
+                    syncProductsFromBackend("", false);
+                });
+
+                document.getElementById("fashionHub").addEventListener("click", (e) => {
+                    const btn = e.target.closest("[data-fashion-q]");
+                    if (!btn) return;
+                    const q = btn.dataset.fashionQ;
+                    const searchInput = document.getElementById("searchInput");
+                    searchInput.value = q === "fashion" ? "" : q;
+                    state.search = searchInput.value;
+                    state.category = "Fashion";
+                    document.getElementById("clearSearchBtn").classList.toggle("hidden", !state.search);
+                    syncProductsFromBackend(state.search, false);
+                });
+
+                // Recommendation Dashboard Controls
+                document.getElementById("recPrevBtn").addEventListener("click", () => {
+                    if (!state.rec.items.length) return;
+                    state.rec.progress = 0;
+                    state.rec.activeIndex = (state.rec.activeIndex - 1 + state.rec.items.length) % state.rec.items.length;
+                    renderSpotlight(true); renderRecommendationCards();
+                });
+                document.getElementById("recNextBtn").addEventListener("click", () => {
+                    if (!state.rec.items.length) return;
+                    state.rec.progress = 0;
+                    state.rec.activeIndex = (state.rec.activeIndex + 1) % state.rec.items.length;
+                    renderSpotlight(true); renderRecommendationCards();
+                });
+                document.getElementById("recPlayPauseBtn").addEventListener("click", () => {
+                    state.rec.autoPlay = !state.rec.autoPlay;
+                    document.getElementById("recPlayPauseIcon").textContent = state.rec.autoPlay ? "pause" : "play_arrow";
+                    document.getElementById("recPlayPauseLabel").textContent = state.rec.autoPlay ? "Auto-Cycle" : "Paused";
+                });
+                document.getElementById("recRefreshBtn").addEventListener("click", () => {
+                    const ic = document.getElementById("recRefreshIcon");
+                    ic.style.transform = "rotate(360deg)";
+                    setTimeout(() => { ic.style.transform = ""; }, 500);
+                    refreshRecommendations();
+                });
+                document.getElementById("toggleRecDashboardBtn").addEventListener("click", () => {
+                    state.rec.collapsed = !state.rec.collapsed;
+                    document.getElementById("recDashboardBody").classList.toggle("hidden", state.rec.collapsed);
+                    document.getElementById("recCollapseIcon").style.transform = state.rec.collapsed ? "rotate(180deg)" : "rotate(0deg)";
+                });
+                document.getElementById("recCardsGrid").addEventListener("click", (e) => {
+                    if (e.target.closest("[data-action]")) return;
+                    const card = e.target.closest("[data-rec-select]");
+                    if (!card) return;
+                    state.rec.activeIndex = Number(card.dataset.recSelect);
+                    state.rec.progress = 0;
+                    renderSpotlight(true); renderRecommendationCards();
+                });
+
+                // Grid / List view toggle
+                const gridBtn = document.getElementById("gridViewBtn");
+                const listBtn = document.getElementById("listViewBtn");
+                gridBtn.addEventListener("click", () => {
+                    state.viewMode = "grid";
+                    gridBtn.className = "p-1.5 rounded-lg bg-white text-primary shadow-sm transition-all";
+                    listBtn.className = "p-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition-all";
+                    renderProducts();
+                });
+                listBtn.addEventListener("click", () => {
+                    state.viewMode = "list";
+                    listBtn.className = "p-1.5 rounded-lg bg-white text-primary shadow-sm transition-all";
+                    gridBtn.className = "p-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition-all";
+                    renderProducts();
+                });
+
+                // Search + Live Autocomplete Dropdown
+                let searchDebounce;
+                const searchInput = document.getElementById("searchInput");
+                const clearSearchBtn = document.getElementById("clearSearchBtn");
+                const searchDropdown = document.getElementById("searchDropdown");
+
+                searchInput.addEventListener("input", (e) => {
+                    state.search = e.target.value;
+                    clearSearchBtn.classList.toggle("hidden", !state.search);
+                    clearTimeout(searchDebounce);
+                    searchDebounce = setTimeout(() => syncProductsFromBackend(state.search, true), 180);
+                });
+
+                document.getElementById("searchForm").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    state.search = searchInput.value;
+                    syncProductsFromBackend(state.search, false);
+                });
+
+                clearSearchBtn.addEventListener("click", () => {
+                    searchInput.value = ""; state.search = "";
+                    clearSearchBtn.classList.add("hidden");
+                    searchDropdown.classList.add("hidden");
+                    syncProductsFromBackend("", false);
+                });
+
+                searchDropdown.addEventListener("click", (e) => {
+                    const btn = e.target.closest("[data-search-pick]");
+                    if (!btn) return;
+                    const picked = btn.dataset.searchPick;
+                    searchInput.value = picked;
+                    state.search = picked;
+                    clearSearchBtn.classList.remove("hidden");
+                    searchDropdown.classList.add("hidden");
+                    syncProductsFromBackend(picked, false);
+                });
+
+                document.addEventListener("click", (e) => {
+                    if (!e.target.closest("#searchForm")) searchDropdown.classList.add("hidden");
+                });
+
+                document.getElementById("activeChipsContainer").addEventListener("click", (e) => {
+                    if (e.target.closest("#clearAllChipsBtn")) return resetAll();
+                    const chip = e.target.closest("[data-remove-chip]");
+                    if (!chip) return;
+                    const k = chip.dataset.removeChip;
+                    if (k === "search") { searchInput.value = ""; state.search = ""; clearSearchBtn.classList.add("hidden"); searchDropdown.classList.add("hidden"); return syncProductsFromBackend("", false); }
+                    if (k === "category") state.category = "all";
+                    syncAllViews();
+                });
+
+                document.getElementById("headerDeptSelect").addEventListener("change", (e) => { state.category = e.target.value; syncAllViews(); });
+                document.getElementById("sortSelect").addEventListener("change", (e) => { state.sort = e.target.value; renderProducts(); });
+
+                document.getElementById("openCartBtn").addEventListener("click", () => openDrawer("cartDrawerOverlay", "cartDrawer"));
+                document.getElementById("closeCartBtn").addEventListener("click", () => closeDrawer("cartDrawerOverlay", "cartDrawer"));
+                document.getElementById("openWishlistBtn").addEventListener("click", () => openDrawer("wishlistOverlay", "wishlistDrawer"));
+                document.getElementById("closeWishlistBtn").addEventListener("click", () => closeDrawer("wishlistOverlay", "wishlistDrawer"));
+                document.getElementById("openOrdersBtn").addEventListener("click", openOrdersView);
+                document.getElementById("closeUtilityModalBtn").addEventListener("click", closeUtilityModal);
+                document.getElementById("closeInspectorBtn").addEventListener("click", closeInspectorModal);
+                document.getElementById("closeInspectorMobile").addEventListener("click", closeInspectorModal);
+
+                // 3D Inspector & .GLB Controls
+                document.getElementById("customGlbInput").addEventListener("change", (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const mv = document.getElementById("realModelViewer");
+                    const canvasBox = document.getElementById("threeCanvasContainer");
+                    if (studio3D.rafId) cancelAnimationFrame(studio3D.rafId);
+                    canvasBox.classList.add("hidden");
+                    mv.classList.remove("hidden");
+                    mv.src = URL.createObjectURL(file);
+                    mv.autoRotate = studio3D.autoRotate;
+                    showToast(`Loaded photorealistic 3D model: ${file.name}`, "success");
+                });
+
+                document.getElementById("modeStudio3DBtn").addEventListener("click", () => { set3DModeUI("solid"); rebuildStudioPrototype(); });
+                document.getElementById("modeExploded3DBtn").addEventListener("click", () => { set3DModeUI("exploded"); rebuildStudioPrototype(); });
+                document.getElementById("modeWireframe3DBtn").addEventListener("click", () => { set3DModeUI("wireframe"); rebuildStudioPrototype(); });
+                document.getElementById("autoRotateBtn").addEventListener("click", (e) => {
+                    studio3D.autoRotate = !studio3D.autoRotate;
+                    const mv = document.getElementById("realModelViewer");
+                    if (mv) mv.autoRotate = studio3D.autoRotate;
+                    e.currentTarget.innerHTML = `<span class="material-symbols-outlined text-[15px]">360</span><span>Orbit: ${studio3D.autoRotate ? "ON" : "OFF"}</span>`;
+                });
+                document.getElementById("toggleARModeBtn").addEventListener("click", () => {
+                    studio3D.arMode = !studio3D.arMode;
+                    document.getElementById("arBtnLabel").textContent = studio3D.arMode ? "Exit AR Desk" : "AR Desk View";
+                    if (studio3D.deskGroup) studio3D.deskGroup.visible = studio3D.arMode;
+                    if (studio3D.turntableGroup) studio3D.turntableGroup.visible = !studio3D.arMode;
+                });
+                document.getElementById("modalSwatches").addEventListener("click", (e) => { const b = e.target.closest(".swatch-btn"); if (!b) return; studio3D.activeHex = b.dataset.swatchHex; document.getElementById("modalFinishLabel").textContent = b.dataset.swatchName; rebuildStudioPrototype(); });
+                document.getElementById("modalAddToCartBtn").addEventListener("click", (e) => addProductToCart(e.currentTarget.dataset.id));
+
+                document.getElementById("cartItemsList").addEventListener("click", (e) => {
+                    const inc = e.target.closest("[data-cart-inc]"), dec = e.target.closest("[data-cart-dec]"), rem = e.target.closest("[data-cart-remove]");
+                    if (inc) addProductToCart(inc.dataset.cartInc);
+                    if (dec) { const it = state.cart.find((i) => i.id === dec.dataset.cartDec); if (it) { it.qty -= 1; if (it.qty <= 0) state.cart = state.cart.filter((i) => i.id !== it.id); renderCart(); } }
+                    if (rem) { state.cart = state.cart.filter((i) => i.id !== rem.dataset.cartRemove); renderCart(); }
+                });
+
+                document.getElementById("promoForm").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const code = document.getElementById("promoInput").value.trim().toUpperCase();
+                    if (code === "HYPER10" || code === "NEXUS10") { state.promoCode = "HYPER10"; renderCart(); showToast("HYPER10 (10% off) applied!", "success"); }
+                    else showToast("Invalid code (try HYPER10)", "warn");
+                });
+                document.getElementById("removePromoBtn").addEventListener("click", () => { state.promoCode = null; renderCart(); });
+
+                // 2-STEP CHECKOUT: ADDRESS -> PAYMENT -> ORDERS
+                let currentAddress = null;
+
+                function openCheckoutModal() {
+                    if (!state.cart.length) return showToast("Your cart is empty", "warn");
+                    closeDrawer("cartDrawerOverlay", "cartDrawer");
+                    const { subtotal, discount, tax, total } = getCartTotals();
+                    document.getElementById("chkSubtotal").textContent = formatCurrency(subtotal);
+                    document.getElementById("chkDiscount").textContent = `-${formatCurrency(discount)}`;
+                    document.getElementById("chkTax").textContent = formatCurrency(tax);
+                    document.getElementById("chkTotal").textContent = formatCurrency(total);
+                    document.getElementById("upiPayAmount").textContent = formatCurrency(total);
+                    document.getElementById("upiQrImg").src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=hypermart@upi&pn=HyperMart&am=${Math.round(total)}&cu=INR`)}`;
+                    document.getElementById("checkoutItemsMini").innerHTML = state.cart.map((c) => `
+            <div class="flex justify-between gap-2">
+              <span class="truncate text-slate-700 font-semibold">${escapeHtml(c.name)} ×${c.qty}</span>
+              <span class="font-bold text-slate-900 shrink-0">${formatCurrency(c.price * c.qty)}</span>
+            </div>`).join("");
+
+                    document.getElementById("addressStepForm").classList.remove("hidden");
+                    document.getElementById("paymentStepPanel").classList.add("hidden");
+                    document.getElementById("paymentStepPanel").classList.remove("flex");
+                    document.getElementById("stepBadge2").className = "flex items-center gap-1.5 text-slate-400";
+
+                    const m = document.getElementById("checkoutModal");
+                    m.classList.remove("hidden"); m.classList.add("flex");
+                }
+
+                function closeCheckoutModal() {
+                    const m = document.getElementById("checkoutModal");
+                    m.classList.add("hidden"); m.classList.remove("flex");
+                }
+
+                async function finalizeOrder(paymentLabel) {
+                    try {
+                        const res = await fetch("/api/checkout", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ cart: state.cart.map((c) => ({ id: Number(c.id), quantity: c.qty })) })
+                        });
+                        const data = await res.json();
+                        if (!res.ok || !data.success) throw new Error(data.message || "Checkout failed");
+
+                        const savedMeta = JSON.parse(localStorage.getItem("hypermart_order_meta") || "[]");
+                        const addrSummary = currentAddress ? `${currentAddress.name} (${currentAddress.type}), ${currentAddress.line}, ${currentAddress.city} - ${currentAddress.pin} · ${currentAddress.phone}` : "Bengaluru";
+                        state.cart.forEach(() => {
+                            savedMeta.unshift({
+                                status: paymentLabel.includes("COD") ? "Confirmed · Pay on Delivery" : "Order Confirmed · Paid",
+                                payment: paymentLabel,
+                                address: addrSummary
+                            });
+                        });
+                        localStorage.setItem("hypermart_order_meta", JSON.stringify(savedMeta));
+
+                        state.cart = []; state.promoCode = null; renderCart();
+                        closeCheckoutModal();
+                        showToast(`Order placed successfully (${paymentLabel})!`, "success");
+                        await syncProductsFromBackend(state.search, false);
+                        openOrdersView();
+                    } catch (err) {
+                        showToast(err.message, "warn");
+                    }
+                }
+
+                document.getElementById("checkoutBtn").addEventListener("click", openCheckoutModal);
+                document.getElementById("closeCheckoutModalBtn").addEventListener("click", closeCheckoutModal);
+
+                document.getElementById("addressStepForm").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    currentAddress = {
+                        name: document.getElementById("addrName").value.trim(),
+                        phone: document.getElementById("addrPhone").value.trim(),
+                        line: document.getElementById("addrLine").value.trim(),
+                        city: document.getElementById("addrCity").value.trim(),
+                        pin: document.getElementById("addrPin").value.trim(),
+                        type: document.getElementById("addrType").value
+                    };
+                    document.getElementById("payAddrName").textContent = currentAddress.name;
+                    document.getElementById("payAddrTag").textContent = currentAddress.type;
+                    document.getElementById("payAddrText").textContent = `${currentAddress.line}, ${currentAddress.city} - ${currentAddress.pin} · ${currentAddress.phone}`;
+                    document.getElementById("headerLocationText").textContent = `${currentAddress.city} ${currentAddress.pin}`;
+
+                    document.getElementById("addressStepForm").classList.add("hidden");
+                    document.getElementById("paymentStepPanel").classList.remove("hidden");
+                    document.getElementById("paymentStepPanel").classList.add("flex");
+                    document.getElementById("stepBadge2").className = "flex items-center gap-1.5 text-primary";
+                });
+
+                document.getElementById("editAddressBtn").addEventListener("click", () => {
+                    document.getElementById("addressStepForm").classList.remove("hidden");
+                    document.getElementById("paymentStepPanel").classList.add("hidden");
+                    document.getElementById("paymentStepPanel").classList.remove("flex");
+                    document.getElementById("stepBadge2").className = "flex items-center gap-1.5 text-slate-400";
+                });
+
+                document.querySelectorAll(".pay-tab-btn").forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        const tab = btn.dataset.payTab;
+                        document.querySelectorAll(".pay-tab-btn").forEach((b) => {
+                            b.className = b.dataset.payTab === tab
+                                ? "pay-tab-btn py-2.5 px-3 rounded-xl border-2 border-primary bg-blue-50 text-primary text-xs font-extrabold"
+                                : "pay-tab-btn py-2.5 px-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold";
+                        });
+                        ["UPI", "CARD", "COD"].forEach((t) => {
+                            const p = document.getElementById(`payPanel${t}`);
+                            p.classList.toggle("hidden", t !== tab);
+                            p.classList.toggle("flex", t === tab);
+                        });
+                    });
+                });
+
+                document.getElementById("confirmUpiPayBtn").addEventListener("click", () => finalizeOrder("Paid via UPI QR"));
+                document.getElementById("payPanelCARD").addEventListener("submit", (e) => { e.preventDefault(); finalizeOrder("Paid via Credit/Debit Card"); });
+                document.getElementById("confirmCodPayBtn").addEventListener("click", () => finalizeOrder("Cash on Delivery (COD)"));
+
+                document.addEventListener("click", (e) => {
+                    const el = e.target.closest("[data-action]");
+                    if (!el) return;
+                    const { action, id } = el.dataset;
+                    if (action === "add-to-cart" && id) addProductToCart(id);
+                    if (action === "inspect-3d" && id) openInspectorModal(id);
+                    if (action === "toggle-wishlist" && id) { state.wishlist.has(id) ? state.wishlist.delete(id) : state.wishlist.add(id); renderWishlist(); renderProducts(); }
+                    if (action === "open-orders") openOrdersView();
+                });
+
+                const stage = document.getElementById("threeCanvasContainer");
+                stage.addEventListener("mousedown", (e) => { studio3D.isDragging = true; studio3D.prevX = e.clientX; studio3D.prevY = e.clientY; });
+                window.addEventListener("mousemove", (e) => { if (!studio3D.isDragging) return; studio3D.targetRotY += (e.clientX - studio3D.prevX) * 0.011; studio3D.targetRotX += (e.clientY - studio3D.prevY) * 0.011; studio3D.prevX = e.clientX; studio3D.prevY = e.clientY; });
+                window.addEventListener("mouseup", () => { studio3D.isDragging = false; });
+                stage.addEventListener("wheel", (e) => { e.preventDefault(); studio3D.targetZoom = Math.max(2.4, Math.min(7.4, studio3D.targetZoom + e.deltaY * 0.004)); }, { passive: false });
+
+                if (typeof io !== "undefined") {
+                    const socket = io();
+                    socket.on("stock_updated", (event) => {
+                        [PRODUCTS, ALL_PRODUCTS].forEach((list) => {
+                            const p = list.find((item) => item.dbId === Number(event.productId));
+                            if (p) {
+                                p.inventory_count = event.newCount;
+                                p.badge = event.newCount <= 0 ? "Out of Stock" : event.newCount <= 3 ? `Only ${event.newCount} Left` : `${event.newCount} In Stock`;
+                                p.badgeType = event.newCount <= 3 ? "rose" : "amber";
+                                p.specs.Stock = `${event.newCount} units`;
+                            }
+                        });
+                        renderProducts();
+                        renderSpotlight(false);
+                        showToast(`Live Kafka Sync: ${event.productName} → ${event.newCount} left`, "info");
+                    });
+                }
+            }
+
+            function bootstrapApp() {
+                bindImageFallbacks(document);
+                initEvents();
+                renderCart();
+                renderWishlist();
+                syncProductsFromBackend("", false);
+                startRecommendationTicker();
+            }
+
+            if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", bootstrapApp);
+            else bootstrapApp();
+        })();
+    </script>
+</body>
+
+</html>
