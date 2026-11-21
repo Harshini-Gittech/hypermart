@@ -77,7 +77,7 @@
     .animate-orb { animation: orbDrift 8s ease-in-out infinite; }
     .rec-card-sheen::after {
       content: ""; position: absolute; inset: 0; width: 45%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+      background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.08), transparent);
       transform: translateX(-140%) skewX(-22deg); pointer-events: none;
     }
     .rec-card-sheen:hover::after { animation: sheenSweep 0.85s ease-out; }
@@ -264,61 +264,61 @@
     <main class="w-full pt-[178px] md:pt-[142px] pb-12 min-h-screen">
         <div class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 flex flex-col gap-5">
 
-            <!-- 0. ANIMATED AUTO-RECOMMENDATION PRODUCT DASHBOARD -->
+            <!-- 0. LIGHT-THEME AUTO-RECOMMENDATION PRODUCT DASHBOARD (WISHLIST + RECENTLY CHECKED) -->
             <section id="recommendationDashboard"
-                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-xl border border-slate-800/90">
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-blue-50/70 to-indigo-50/80 text-slate-900 shadow-card border border-blue-200/80">
                 <div
-                    class="pointer-events-none absolute -top-20 -left-16 w-72 h-72 rounded-full bg-blue-600/25 blur-3xl animate-orb">
+                    class="pointer-events-none absolute -top-20 -left-16 w-72 h-72 rounded-full bg-blue-200/40 blur-3xl animate-orb">
                 </div>
-                <div class="pointer-events-none absolute -bottom-24 right-10 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl animate-orb"
+                <div class="pointer-events-none absolute -bottom-24 right-10 w-80 h-80 rounded-full bg-indigo-200/35 blur-3xl animate-orb"
                     style="animation-delay: -3.5s;"></div>
 
                 <div
-                    class="relative z-10 px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+                    class="relative z-10 px-5 sm:px-6 pt-5 pb-3.5 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
                             <span class="material-symbols-outlined text-white text-xl">auto_awesome</span>
                         </div>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
-                                <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-white">
+                                <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-slate-900">
                                     Auto-Recommended Product Dashboard</h2>
                                 <span id="recLiveStatus"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                    <span>Live AI Engine</span>
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                    <span>Wishlist &amp; Recent Engine</span>
                                 </span>
                             </div>
-                            <p id="recContextSubtitle" class="text-xs text-slate-300 mt-0.5">Auto-adapting in real time
-                                to your browsing, 3D views &amp; live inventory</p>
+                            <p id="recContextSubtitle" class="text-xs text-slate-600 mt-0.5">Showing your wishlist &amp;
+                                recently checked products in real time</p>
                         </div>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
                         <div
-                            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                            <span class="text-slate-400 font-medium">Top Match</span>
-                            <span id="recAvgMatchMetric" class="font-extrabold text-blue-300 tabular-nums">98%</span>
+                            class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs shadow-sm">
+                            <span class="text-slate-500 font-medium">Top Match</span>
+                            <span id="recAvgMatchMetric" class="font-extrabold text-primary tabular-nums">99%</span>
                         </div>
                         <div
-                            class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs">
-                            <span class="text-slate-400 font-medium">Avg Savings</span>
+                            class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs shadow-sm">
+                            <span class="text-slate-500 font-medium">Avg Savings</span>
                             <span id="recSavingsMetric"
-                                class="font-extrabold text-emerald-300 tabular-nums">₹2,500</span>
+                                class="font-extrabold text-emerald-600 tabular-nums">₹2,500</span>
                         </div>
                         <button type="button" id="recPlayPauseBtn"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold text-white transition-colors">
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-colors shadow-sm">
                             <span id="recPlayPauseIcon" class="material-symbols-outlined text-[16px]">pause</span>
                             <span id="recPlayPauseLabel">Auto-Cycle</span>
                         </button>
                         <button type="button" id="recRefreshBtn"
-                            class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 hover:text-white transition-colors">
+                            class="p-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-primary transition-colors shadow-sm">
                             <span id="recRefreshIcon"
                                 class="material-symbols-outlined text-[18px] block transition-transform duration-500">refresh</span>
                         </button>
                         <button type="button" id="toggleRecDashboardBtn"
-                            class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-slate-200 hover:text-white transition-colors">
+                            class="p-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-primary transition-colors shadow-sm">
                             <span id="recCollapseIcon"
                                 class="material-symbols-outlined text-[18px] block transition-transform duration-200">expand_less</span>
                         </button>
@@ -328,23 +328,23 @@
                 <div id="recDashboardBody"
                     class="relative z-10 p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                     <div id="recSpotlightCard"
-                        class="lg:col-span-5 relative rounded-2xl bg-white/[0.06] backdrop-blur-md border border-white/10 p-5 flex flex-col justify-between gap-4 overflow-hidden">
+                        class="lg:col-span-5 relative rounded-2xl bg-white border border-slate-200/90 shadow-sm p-5 flex flex-col justify-between gap-4 overflow-hidden">
                     </div>
                     <div class="lg:col-span-7 flex flex-col justify-between gap-3">
                         <div class="flex items-center justify-between">
                             <span
-                                class="text-[11px] font-extrabold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[15px]">trending_up</span>
-                                <span>Personalized For You &middot; Click Any Pick to Spotlight</span>
+                                class="text-[11px] font-extrabold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">favorite</span>
+                                <span>Check Your Wishlist &amp; Recently Checked &middot; Click Any Pick</span>
                             </span>
                             <div class="flex items-center gap-1">
                                 <button type="button" id="recPrevBtn"
-                                    class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                                    class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 transition-colors shadow-sm"
                                     aria-label="Previous">
                                     <span class="material-symbols-outlined text-[17px]">chevron_left</span>
                                 </button>
                                 <button type="button" id="recNextBtn"
-                                    class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                                    class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 transition-colors shadow-sm"
                                     aria-label="Next">
                                     <span class="material-symbols-outlined text-[17px]">chevron_right</span>
                                 </button>
@@ -352,13 +352,13 @@
                         </div>
                         <div id="recCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                         <div class="flex items-center gap-3 pt-1">
-                            <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                            <div class="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
                                 <div id="recCycleProgress"
-                                    class="h-full bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 rounded-full transition-all duration-100"
+                                    class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 rounded-full transition-all duration-100"
                                     style="width: 0%"></div>
                             </div>
                             <span id="recCycleCounter"
-                                class="text-[11px] font-bold text-slate-300 tabular-nums shrink-0">1 / 4</span>
+                                class="text-[11px] font-bold text-slate-600 tabular-nums shrink-0">1 / 4</span>
                         </div>
                     </div>
                 </div>
@@ -384,14 +384,14 @@
                             class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
                         <span class="text-xs font-bold text-slate-800">Jackets</span>
                     </button>
-                    <button type="button" data-fashion-q="thermals" class="group flex flex-col items-center gap-1.5">
+                    <button type="button" data-fashion-q="shirt" class="group flex flex-col items-center gap-1.5">
                         <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=240&q=80"
                             alt="Shirts & Thermals"
                             class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
                         <span class="text-xs font-bold text-slate-800">Shirts &amp; Thermals</span>
                     </button>
                     <button type="button" data-fashion-q="kurta" class="group flex flex-col items-center gap-1.5">
-                        <img src="https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=240&q=80"
+                        <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=240&q=80"
                             alt="Kurta Sets"
                             class="w-full h-24 object-cover rounded-xl border-b-4 border-rose-400 group-hover:scale-105 transition-transform" />
                         <span class="text-xs font-bold text-slate-800">Kurta Sets</span>
@@ -925,6 +925,9 @@
             const PRODUCTS = [];
             const ALL_PRODUCTS = [];
 
+            const savedWishlistIds = JSON.parse(localStorage.getItem("hypermart_wishlist") || "[]");
+            const savedRecentIds = JSON.parse(localStorage.getItem("hypermart_recently_viewed") || "[]");
+
             const state = {
                 search: "",
                 category: "all",
@@ -934,11 +937,12 @@
                 page: 1,
                 perPage: 12,
                 promoCode: null,
-                wishlist: new Set(),
+                wishlist: new Set(savedWishlistIds.map(String)),
+                recentlyViewed: savedRecentIds.map(String),
                 cart: [],
                 signals: {
                     preferredCategories: {},
-                    lastTrigger: "Synced live with OpenSearch Related-Word Search & PostgreSQL"
+                    lastTrigger: "Showing your wishlist & recently checked products"
                 },
                 rec: { items: [], activeIndex: 0, autoPlay: true, isHovered: false, progress: 0, collapsed: false, timerId: null }
             };
@@ -1032,7 +1036,7 @@
                         { name: "Crimson Edition", hex: "#e11d48" }
                     ],
                     specs: { Category: cat, Warehouse: row.city || "India", Stock: `${stock} units`, Delivery: "Prime Next-Day" },
-                    description: `${row.name} — ships from ${row.city} warehouse with interactive 360° 3D & AR preview.`,
+                    description: `${row.name} — ships from ${row.city} warehouse.`,
                     image: row.image_url,
                     fallback: `https://placehold.co/400x300/f1f5f9/334155?text=${encodeURIComponent(row.name)}`
                 };
@@ -1101,58 +1105,121 @@
                 }
             }
 
-            /* ---------------- RECOMMENDATION ENGINE ---------------- */
+            /* ---------------- RECOMMENDATION ENGINE (WISHLIST + RECENTLY CHECKED) ---------------- */
+            function trackRecentlyViewed(product) {
+                if (!product) return;
+                const id = String(product.id);
+                state.recentlyViewed = [id, ...state.recentlyViewed.filter((x) => x !== id)].slice(0, 8);
+                localStorage.setItem("hypermart_recently_viewed", JSON.stringify(state.recentlyViewed));
+            }
+
             function recordUserSignal(type, product) {
                 if (!product) return;
                 state.signals.preferredCategories[product.category] = (state.signals.preferredCategories[product.category] || 0) + 2;
-                state.signals.lastTrigger = type === "cart" ? `Updated after adding ${product.name}` : `Tuned from your 3D view of ${product.name}`;
+                if (type === "view" || type === "3d") {
+                    trackRecentlyViewed(product);
+                    state.signals.lastTrigger = `Recently checked: ${product.name}`;
+                } else if (type === "wishlist") {
+                    state.signals.lastTrigger = `Check your wishlist: ${product.name} saved!`;
+                } else if (type === "cart") {
+                    trackRecentlyViewed(product);
+                    state.signals.lastTrigger = `Updated after adding ${product.name}`;
+                }
                 refreshRecommendations();
             }
 
             function computeRecommendations() {
                 const source = ALL_PRODUCTS.length ? ALL_PRODUCTS : PRODUCTS;
                 if (!source.length) return [];
-                const scored = source.map((p) => {
-                    const savings = Math.max(0, p.oldPrice - p.price);
-                    let score = 88 + (state.signals.preferredCategories[p.category] || 0) * 2;
-                    if (p.inventory_count <= 0) score -= 25;
-                    return { product: p, matchPct: Math.min(99, Math.max(80, score)), reason: p.inventory_count <= 3 ? "Low Stock Alert" : `Ships from ${p.city}`, savings };
+
+                const picked = [];
+                const seen = new Set();
+
+                // 1. Prioritize Wishlist items ("Check Your Wishlist")
+                state.wishlist.forEach((id) => {
+                    const p = source.find((x) => x.id === id);
+                    if (p && !seen.has(p.id)) {
+                        seen.add(p.id);
+                        picked.push({
+                            product: p,
+                            matchPct: 99,
+                            reason: "❤️ Check Your Wishlist",
+                            reasonType: "wishlist",
+                            savings: Math.max(0, p.oldPrice - p.price)
+                        });
+                    }
                 });
-                scored.sort((a, b) => b.matchPct - a.matchPct);
-                return scored.slice(0, 4);
+
+                // 2. Next prioritize Recently Checked items
+                state.recentlyViewed.forEach((id) => {
+                    const p = source.find((x) => x.id === id);
+                    if (p && !seen.has(p.id)) {
+                        seen.add(p.id);
+                        picked.push({
+                            product: p,
+                            matchPct: 96,
+                            reason: "👀 Recently Checked",
+                            reasonType: "recent",
+                            savings: Math.max(0, p.oldPrice - p.price)
+                        });
+                    }
+                });
+
+                // 3. Fill remaining slots with top in-stock picks
+                source.forEach((p) => {
+                    if (picked.length >= 4 || seen.has(p.id)) return;
+                    seen.add(p.id);
+                    picked.push({
+                        product: p,
+                        matchPct: 92,
+                        reason: p.inventory_count <= 3 ? "🔥 Low Stock Alert" : `✨ Popular in ${p.city}`,
+                        reasonType: "trending",
+                        savings: Math.max(0, p.oldPrice - p.price)
+                    });
+                });
+
+                return picked.slice(0, 4);
             }
 
             function renderSpotlight(animate) {
                 const card = document.getElementById("recSpotlightCard");
                 const recItem = state.rec.items[state.rec.activeIndex];
                 if (!card || !recItem) { if (card) card.innerHTML = ""; return; }
-                const { product: p, matchPct, reason, savings } = recItem;
+                const { product: p, matchPct, reason, reasonType, savings } = recItem;
+                const isFashion = p.category === "Fashion";
+                const pillCls = reasonType === "wishlist"
+                    ? "bg-rose-50 border-rose-200 text-rose-600"
+                    : reasonType === "recent"
+                        ? "bg-amber-50 border-amber-200 text-amber-700"
+                        : "bg-blue-50 border-blue-200 text-primary";
+                const primaryAction = isFashion ? "view-product" : "inspect-3d";
+
                 card.innerHTML = `
           <div class="flex items-start justify-between gap-2 ${animate ? "animate-spotlight-morph" : ""}">
             <div>
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/35 text-blue-200 text-[10px] font-extrabold uppercase">${escapeHtml(reason)}</span>
-              <div class="text-[11px] font-bold text-slate-400 mt-1">${escapeHtml(p.category)} &middot; ${p.inventory_count} in stock</div>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-extrabold uppercase ${pillCls}">${escapeHtml(reason)}</span>
+              <div class="text-[11px] font-bold text-slate-500 mt-1">${escapeHtml(p.category)} &middot; ${p.inventory_count} in stock</div>
             </div>
-            <span class="text-xs font-extrabold text-blue-300 bg-white/10 px-2.5 py-1 rounded-full">${matchPct}% Match</span>
+            <span class="text-xs font-extrabold text-primary bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full">${matchPct}% Match</span>
           </div>
-          <div class="relative h-44 flex items-center justify-center my-1">
-            <button type="button" data-action="inspect-3d" data-id="${p.id}" class="h-full w-full flex items-center justify-center">
+          <div class="relative h-44 flex items-center justify-center my-1 bg-slate-50 rounded-xl p-3">
+            <button type="button" data-action="${primaryAction}" data-id="${p.id}" class="h-full w-full flex items-center justify-center">
               <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-[85%] object-contain rounded-xl animate-float-product" />
             </button>
           </div>
           <div class="flex flex-col gap-3">
             <div>
-              <h3 class="text-sm sm:text-base font-extrabold text-white line-clamp-1">${escapeHtml(p.name)}</h3>
+              <h3 class="text-sm sm:text-base font-extrabold text-slate-900 line-clamp-1">${escapeHtml(p.name)}</h3>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-xl font-extrabold text-white tabular-nums">${formatCurrency(p.price)}</span>
-                <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">Save ${formatCurrency(savings)}</span>
+                <span class="text-xl font-extrabold text-slate-900 tabular-nums">${formatCurrency(p.price)}</span>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">Save ${formatCurrency(savings)}</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" data-action="inspect-3d" data-id="${p.id}" class="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px]">view_in_ar</span><span>Open Real 3D</span>
-              </button>
-              <button type="button" data-action="add-to-cart" data-id="${p.id}" class="py-2.5 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold">+ Quick Add</button>
+              ${isFashion ? "" : `<button type="button" data-action="inspect-3d" data-id="${p.id}" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px] text-primary">view_in_ar</span><span>Open Real 3D</span>
+              </button>`}
+              <button type="button" data-action="add-to-cart" data-id="${p.id}" class="flex-1 py-2.5 px-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-extrabold shadow-sm">+ Quick Add</button>
             </div>
           </div>`;
                 bindImageFallbacks(card);
@@ -1166,19 +1233,21 @@
                 grid.innerHTML = state.rec.items.map((item, idx) => {
                     const p = item.product;
                     const isActive = idx === state.rec.activeIndex;
+                    const isFashion = p.category === "Fashion";
+                    const tagCol = item.reasonType === "wishlist" ? "text-rose-600" : item.reasonType === "recent" ? "text-amber-600" : "text-primary";
                     return `
-            <div data-rec-select="${idx}" class="rec-card-sheen relative overflow-hidden cursor-pointer rounded-xl p-3.5 border transition-all flex items-center gap-3 ${isActive ? "bg-blue-600/20 border-blue-400/70" : "bg-white/[0.05] hover:bg-white/[0.1] border-white/10"}">
-              <div class="w-16 h-16 rounded-xl bg-white/95 p-1.5 flex items-center justify-center shrink-0">
+            <div data-rec-select="${idx}" class="rec-card-sheen relative overflow-hidden cursor-pointer rounded-xl p-3.5 border transition-all flex items-center gap-3 ${isActive ? "bg-blue-50/90 border-primary shadow-sm" : "bg-white hover:bg-slate-50 border-slate-200/90"}">
+              <div class="w-16 h-16 rounded-xl bg-slate-100 p-1.5 flex items-center justify-center shrink-0">
                 <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-full object-contain rounded" />
               </div>
               <div class="flex-1 min-w-0 flex flex-col gap-1">
-                <span class="text-[10px] font-extrabold text-blue-200 truncate">${escapeHtml(item.reason)}</span>
-                <h4 class="text-xs font-bold text-white line-clamp-1">${escapeHtml(p.name)}</h4>
+                <span class="text-[10px] font-extrabold ${tagCol} truncate">${escapeHtml(item.reason)}</span>
+                <h4 class="text-xs font-bold text-slate-900 line-clamp-1">${escapeHtml(p.name)}</h4>
                 <div class="flex items-center justify-between gap-2 mt-0.5">
-                  <span class="text-sm font-extrabold text-white tabular-nums">${formatCurrency(p.price)}</span>
+                  <span class="text-sm font-extrabold text-slate-900 tabular-nums">${formatCurrency(p.price)}</span>
                   <div class="flex items-center gap-1">
-                    <button type="button" data-action="inspect-3d" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-blue-500 text-white text-[10px] font-bold">3D</button>
-                    <button type="button" data-action="add-to-cart" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold">+ Cart</button>
+                    ${isFashion ? "" : `<button type="button" data-action="inspect-3d" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold">3D</button>`}
+                    <button type="button" data-action="add-to-cart" data-id="${p.id}" class="px-2 py-1 rounded-lg bg-primary hover:bg-primary-hover text-white text-[10px] font-bold">+ Cart</button>
                   </div>
                 </div>
               </div>
@@ -1192,7 +1261,17 @@
                 if (state.rec.activeIndex >= state.rec.items.length) state.rec.activeIndex = 0;
                 state.rec.progress = 0;
                 const sub = document.getElementById("recContextSubtitle");
-                if (sub) sub.textContent = state.signals.lastTrigger;
+                if (sub) {
+                    if (state.wishlist.size > 0 && state.recentlyViewed.length > 0) {
+                        sub.textContent = `Check your ${state.wishlist.size} wishlist item(s) & recently checked products`;
+                    } else if (state.wishlist.size > 0) {
+                        sub.textContent = `Check your wishlist (${state.wishlist.size} saved item${state.wishlist.size > 1 ? "s" : ""})!`;
+                    } else if (state.recentlyViewed.length > 0) {
+                        sub.textContent = `Showing your recently checked products & top live picks`;
+                    } else {
+                        sub.textContent = state.signals.lastTrigger;
+                    }
+                }
                 if (state.rec.items.length) {
                     const avgSave = Math.round(state.rec.items.reduce((s, x) => s + x.savings, 0) / state.rec.items.length);
                     document.getElementById("recSavingsMetric").textContent = formatCurrency(avgSave);
@@ -1294,7 +1373,9 @@
                 grid.innerHTML = pageItems.map((p) => {
                     const isSaved = state.wishlist.has(p.id);
                     const out = p.inventory_count <= 0;
+                    const isFashion = p.category === "Fashion";
                     const bClass = p.badgeType === "rose" ? "bg-rose-600 text-white" : "bg-amber-500 text-white";
+                    const clickAction = isFashion ? "view-product" : "inspect-3d";
                     return `
             <article class="bg-white rounded-2xl border border-slate-200/80 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all overflow-hidden group flex ${isList ? "flex-col sm:flex-row" : "flex-col"}">
               <div class="relative bg-slate-100/80 p-5 flex items-center justify-center overflow-hidden ${isList ? "h-56 sm:h-auto sm:w-64 shrink-0" : "h-56"}">
@@ -1302,10 +1383,10 @@
                 <button type="button" data-action="toggle-wishlist" data-id="${p.id}" class="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/95 shadow-sm flex items-center justify-center ${isSaved ? "text-rose-500" : "text-slate-400"}">
                   <span class="material-symbols-outlined text-[18px] ${isSaved ? "star-filled" : ""}">favorite</span>
                 </button>
-                <button type="button" data-action="inspect-3d" data-id="${p.id}" class="absolute top-3 right-3 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 hover:bg-primary hover:text-white text-primary text-[11px] font-extrabold shadow-sm">
+                ${isFashion ? "" : `<button type="button" data-action="inspect-3d" data-id="${p.id}" class="absolute top-3 right-3 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 hover:bg-primary hover:text-white text-primary text-[11px] font-extrabold shadow-sm">
                   <span class="material-symbols-outlined text-[14px]">view_in_ar</span><span>Real 3D · AR</span>
-                </button>
-                <button type="button" data-action="inspect-3d" data-id="${p.id}" class="w-full h-full flex items-center justify-center">
+                </button>`}
+                <button type="button" data-action="${clickAction}" data-id="${p.id}" class="w-full h-full flex items-center justify-center">
                   <img src="${escapeHtml(p.image)}" data-fallback="${escapeHtml(p.fallback)}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
                 </button>
               </div>
@@ -1315,7 +1396,7 @@
                     <span class="uppercase text-primary">${escapeHtml(p.category)}</span>
                     <span class="text-slate-400">📍 ${escapeHtml(p.city)}</span>
                   </div>
-                  <h2 class="text-sm sm:text-[15px] font-extrabold text-slate-900 line-clamp-2 cursor-pointer hover:text-primary" data-action="inspect-3d" data-id="${p.id}">${escapeHtml(p.name)}</h2>
+                  <h2 class="text-sm sm:text-[15px] font-extrabold text-slate-900 line-clamp-2 cursor-pointer hover:text-primary" data-action="${clickAction}" data-id="${p.id}">${escapeHtml(p.name)}</h2>
                   <div class="flex items-center gap-1.5">
                     <span class="flex items-center text-amber-500">${renderStarsHtml(p.rating, 15)}</span>
                     <span class="text-xs font-bold">${p.rating.toFixed(1)}</span>
@@ -1330,9 +1411,9 @@
                   <button type="button" data-action="add-to-cart" data-id="${p.id}" ${out ? "disabled" : ""} class="flex-1 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover disabled:bg-slate-300 text-white text-xs font-extrabold flex items-center justify-center gap-1.5">
                     <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span><span>${out ? "Sold Out" : "Add to Cart"}</span>
                   </button>
-                  <button type="button" data-action="inspect-3d" data-id="${p.id}" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1">
+                  ${isFashion ? "" : `<button type="button" data-action="inspect-3d" data-id="${p.id}" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1">
                     <span class="material-symbols-outlined text-[16px] text-primary">360</span><span>Real 3D</span>
-                  </button>
+                  </button>`}
                 </div>
               </div>
             </article>`;
@@ -1405,6 +1486,7 @@
             }
 
             function renderWishlist() {
+                localStorage.setItem("hypermart_wishlist", JSON.stringify(Array.from(state.wishlist)));
                 const badge = document.getElementById("wishlistBadge");
                 badge.textContent = String(state.wishlist.size);
                 badge.classList.toggle("hidden", state.wishlist.size === 0);
@@ -1786,14 +1868,6 @@
                         ring.rotation.x = Math.PI / 2; ring.position.set(cx, cy, -0.11); camGrp.add(ring);
                     });
                     addL(camGrp, [0, 0, -0.6]);
-                } else if (mt === "fashion") {
-                    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.36, 1.35, 32), bodyMat);
-                    torso.scale.set(1.15, 1, 0.62); torso.position.y = 0.2;
-                    addL(torso, [0, 0.25, 0]);
-                    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.24, 24), darkMat);
-                    collar.position.y = 0.95; addL(collar, [0, 0.6, 0]);
-                    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.95, 32), bodyMat);
-                    skirt.position.y = -0.65; addL(skirt, [0, -0.35, 0]);
                 } else {
                     const baseGrp = new THREE.Group();
                     const deck = new THREE.Mesh(makeRoundedBox(2.65, 0.09, 1.82, 0.1, 0.018), bodyMat);
@@ -1835,7 +1909,7 @@
 
             async function openInspectorModal(id) {
                 const p = PRODUCTS.find((item) => item.id === id) || ALL_PRODUCTS.find((item) => item.id === id);
-                if (!p) return;
+                if (!p || p.category === "Fashion") return;
                 studio3D.activeProduct = p; studio3D.activeHex = p.swatches[0].hex; studio3D.open = true;
                 studio3D.targetRotX = 0.24; studio3D.targetRotY = -0.58; studio3D.targetZoom = 4.4;
                 set3DModeUI("solid");
@@ -2211,7 +2285,35 @@
                     const { action, id } = el.dataset;
                     if (action === "add-to-cart" && id) addProductToCart(id);
                     if (action === "inspect-3d" && id) openInspectorModal(id);
-                    if (action === "toggle-wishlist" && id) { state.wishlist.has(id) ? state.wishlist.delete(id) : state.wishlist.add(id); renderWishlist(); renderProducts(); }
+                    if (action === "view-product" && id) {
+                        const prod = PRODUCTS.find((p) => p.id === id) || ALL_PRODUCTS.find((p) => p.id === id);
+                        if (prod) {
+                            recordUserSignal("view", prod);
+                            openUtilityModal(prod.name, `
+                                <div class="flex flex-col gap-3">
+                                    <img src="${escapeHtml(prod.image)}" class="w-full h-60 object-contain rounded-xl bg-slate-50 p-2" />
+                                    <div class="flex items-baseline justify-between">
+                                        <span class="text-xl font-extrabold text-slate-900">${formatCurrency(prod.price)}</span>
+                                        <span class="text-xs font-bold text-emerald-600">${prod.inventory_count} in stock · ${escapeHtml(prod.city)}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-600">${escapeHtml(prod.description)}</p>
+                                    <button type="button" data-action="add-to-cart" data-id="${prod.id}" class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-extrabold">Add to Cart</button>
+                                </div>
+                            `);
+                        }
+                    }
+                    if (action === "toggle-wishlist" && id) {
+                        const prod = PRODUCTS.find((p) => p.id === id) || ALL_PRODUCTS.find((p) => p.id === id);
+                        if (state.wishlist.has(id)) {
+                            state.wishlist.delete(id);
+                        } else {
+                            state.wishlist.add(id);
+                            if (prod) recordUserSignal("wishlist", prod);
+                        }
+                        renderWishlist();
+                        renderProducts();
+                        refreshRecommendations();
+                    }
                     if (action === "open-orders") openOrdersView();
                 });
 
@@ -2251,6 +2353,370 @@
 
             if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", bootstrapApp);
             else bootstrapApp();
+        })();
+    </script>
+
+    <!-- ==================== HYPERBOT VOICE + RAG AI CHATBOT ==================== -->
+    <div id="hyperbotRoot" class="fixed bottom-5 right-5 z-50 font-sans">
+        <button type="button" id="hyperbotToggleBtn"
+            class="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-2xl border border-white/20 transition-transform hover:scale-105">
+            <span class="material-symbols-outlined text-lg">smart_toy</span>
+            <span>Ask HyperBot</span>
+            <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+        </button>
+
+        <div id="hyperbotPanel"
+            class="hidden fixed bottom-5 right-5 w-[340px] sm:w-[380px] h-[510px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex-col overflow-hidden z-50">
+
+            <div id="hyperbotHeader"
+                class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 cursor-move select-none"
+                title="Drag to move HyperBot">
+                <div class="flex items-center gap-2.5 pointer-events-none">
+                    <div
+                        class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg text-white">smart_toy</span>
+                    </div>
+                    <div>
+                        <div class="text-sm font-extrabold leading-none flex items-center gap-1.5">
+                            <span>HyperBot AI</span>
+                            <span
+                                class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/10 text-slate-300">Drag</span>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 font-semibold mt-1 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span>Voice + Live Store Guide</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button type="button" id="hyperbotVoiceToggleBtn" title="Toggle Voice Output"
+                        class="p-1 rounded-lg text-emerald-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span id="hyperbotVoiceIcon" class="material-symbols-outlined text-lg">volume_up</span>
+                    </button>
+                    <button type="button" id="hyperbotMinBtn" title="Minimize / Expand"
+                        class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span id="hyperbotMinIcon" class="material-symbols-outlined text-lg">remove</span>
+                    </button>
+                    <button type="button" id="hyperbotCloseBtn" title="Close"
+                        class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="hyperbotBody" class="flex-1 flex flex-col overflow-hidden">
+                <div id="hyperbotMessages" class="flex-1 p-3.5 overflow-y-auto bg-slate-50 flex flex-col gap-3 text-xs">
+                    <div
+                        class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm max-w-[90%] leading-relaxed">
+                        Namaste! I'm <strong>HyperBot</strong>. Tap the <strong>mic</strong> to speak or type below—I'll
+                        answer out loud and show clickable products!
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" data-quick-ask="Is headset available?"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🎧 Is headset available?
+                        </button>
+                        <button type="button" data-quick-ask="bluetoth"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🎵 Bluetooth items
+                        </button>
+                        <button type="button" data-quick-ask="What items are on this website?"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🛍️ Show popular items
+                        </button>
+                    </div>
+                </div>
+
+                <div id="hyperbotVoiceStatus"
+                    class="hidden px-3 py-1.5 bg-rose-50 border-t border-rose-200 text-rose-600 text-[11px] font-bold items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                    <span>Listening... speak your product request</span>
+                </div>
+
+                <form id="hyperbotForm" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                    <button type="button" id="hyperbotMicBtn" title="Speak to HyperBot"
+                        class="h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all shrink-0">
+                        <span id="hyperbotMicIcon" class="material-symbols-outlined text-lg">mic</span>
+                    </button>
+                    <input id="hyperbotInput" type="text" autocomplete="off"
+                        placeholder="Speak or type (e.g. 'bluetoth')..."
+                        class="flex-1 h-10 rounded-xl border-slate-300 text-xs font-medium focus:border-primary focus:ring-primary/20" />
+                    <button type="submit" id="hyperbotSendBtn"
+                        class="h-10 px-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold flex items-center justify-center transition-colors shrink-0">
+                        <span class="material-symbols-outlined text-lg">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById("hyperbotToggleBtn");
+            const closeBtn = document.getElementById("hyperbotCloseBtn");
+            const minBtn = document.getElementById("hyperbotMinBtn");
+            const minIcon = document.getElementById("hyperbotMinIcon");
+            const voiceToggleBtn = document.getElementById("hyperbotVoiceToggleBtn");
+            const voiceIcon = document.getElementById("hyperbotVoiceIcon");
+            const micBtn = document.getElementById("hyperbotMicBtn");
+            const micIcon = document.getElementById("hyperbotMicIcon");
+            const voiceStatus = document.getElementById("hyperbotVoiceStatus");
+            const panel = document.getElementById("hyperbotPanel");
+            const header = document.getElementById("hyperbotHeader");
+            const body = document.getElementById("hyperbotBody");
+            const form = document.getElementById("hyperbotForm");
+            const input = document.getElementById("hyperbotInput");
+            const messages = document.getElementById("hyperbotMessages");
+
+            let isMinimized = false;
+            let voiceEnabled = true;
+            let isListening = false;
+            const chatHistory = [];
+
+            function esc(str) {
+                return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+
+            function speakReply(text) {
+                if (!voiceEnabled || !("speechSynthesis" in window) || !text) return;
+                window.speechSynthesis.cancel();
+                const cleanText = String(text)
+                    .replace(/₹/g, "rupees ")
+                    .replace(/[*_`#]/g, "")
+                    .trim();
+                const utter = new SpeechSynthesisUtterance(cleanText);
+                utter.lang = "en-IN";
+                utter.rate = 1.05;
+                window.speechSynthesis.speak(utter);
+            }
+
+            function stopSpeaking() {
+                if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+            }
+
+            voiceToggleBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                voiceEnabled = !voiceEnabled;
+                voiceIcon.textContent = voiceEnabled ? "volume_up" : "volume_off";
+                voiceToggleBtn.classList.toggle("text-emerald-400", voiceEnabled);
+                voiceToggleBtn.classList.toggle("text-slate-400", !voiceEnabled);
+                if (!voiceEnabled) stopSpeaking();
+            });
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition = null;
+            let voiceTranscript = "";
+
+            function setListeningUI(active) {
+                isListening = active;
+                voiceStatus.classList.toggle("hidden", !active);
+                voiceStatus.classList.toggle("flex", active);
+                micBtn.className = active
+                    ? "h-10 w-10 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center transition-all shrink-0 animate-pulse"
+                    : "h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all shrink-0";
+                micIcon.textContent = active ? "mic_off" : "mic";
+            }
+
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = "en-IN";
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    stopSpeaking();
+                    voiceTranscript = "";
+                    setListeningUI(true);
+                };
+
+                recognition.onresult = (event) => {
+                    let text = "";
+                    for (let i = 0; i < event.results.length; i++) {
+                        text += event.results[i][0].transcript;
+                    }
+                    voiceTranscript = text.trim();
+                    input.value = voiceTranscript;
+                };
+
+                recognition.onerror = (event) => {
+                    voiceTranscript = "";
+                    setListeningUI(false);
+                    if (event.error === "not-allowed") {
+                        alert("Please allow microphone access in Chrome to use Voice Shopping.");
+                    }
+                };
+
+                recognition.onend = () => {
+                    setListeningUI(false);
+                    const finalQuery = voiceTranscript.trim();
+                    voiceTranscript = "";
+                    if (finalQuery) {
+                        input.value = "";
+                        askHyperBot(finalQuery);
+                    }
+                };
+
+                micBtn.addEventListener("click", () => {
+                    if (isListening) recognition.stop();
+                    else recognition.start();
+                });
+            } else {
+                micBtn.title = "Voice input not supported in this browser (use Chrome)";
+                micBtn.classList.add("opacity-50", "cursor-not-allowed");
+            }
+
+            toggleBtn.addEventListener("click", () => {
+                toggleBtn.classList.add("hidden");
+                panel.classList.remove("hidden");
+                panel.classList.add("flex");
+                if (isMinimized) toggleMinimize();
+                input.focus();
+            });
+
+            closeBtn.addEventListener("click", () => {
+                stopSpeaking();
+                if (recognition && isListening) recognition.stop();
+                panel.classList.add("hidden");
+                panel.classList.remove("flex");
+                toggleBtn.classList.remove("hidden");
+            });
+
+            function toggleMinimize() {
+                isMinimized = !isMinimized;
+                body.classList.toggle("hidden", isMinimized);
+                panel.style.height = isMinimized ? "auto" : "510px";
+                minIcon.textContent = isMinimized ? "open_in_full" : "remove";
+            }
+            minBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                toggleMinimize();
+            });
+
+            let isDragging = false, offsetX = 0, offsetY = 0;
+            header.addEventListener("mousedown", (e) => {
+                if (e.target.closest("button")) return;
+                isDragging = true;
+                const rect = panel.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                panel.style.right = "auto";
+                panel.style.bottom = "auto";
+                panel.style.left = rect.left + "px";
+                panel.style.top = rect.top + "px";
+            });
+            window.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+                const maxX = window.innerWidth - panel.offsetWidth;
+                const maxY = window.innerHeight - panel.offsetHeight;
+                const nextX = Math.max(8, Math.min(maxX - 8, e.clientX - offsetX));
+                const nextY = Math.max(8, Math.min(maxY - 8, e.clientY - offsetY));
+                panel.style.left = nextX + "px";
+                panel.style.top = nextY + "px";
+            });
+            window.addEventListener("mouseup", () => { isDragging = false; });
+
+            function goToProductOnStore(productName) {
+                const searchInput = document.getElementById("searchInput");
+                const searchForm = document.getElementById("searchForm");
+                if (searchInput && searchForm) {
+                    searchInput.value = productName;
+                    searchForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+                }
+                const grid = document.getElementById("productGrid");
+                if (grid) {
+                    setTimeout(() => grid.scrollIntoView({ behavior: "smooth", block: "center" }), 250);
+                }
+                if (!isMinimized) toggleMinimize();
+            }
+
+            async function askHyperBot(q) {
+                const userDiv = document.createElement("div");
+                userDiv.className = "self-end bg-primary text-white font-semibold p-3 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm";
+                userDiv.textContent = q;
+                messages.appendChild(userDiv);
+
+                const loadingDiv = document.createElement("div");
+                loadingDiv.className = "text-[11px] text-slate-400 italic px-1";
+                loadingDiv.textContent = "HyperBot is checking live store inventory...";
+                messages.appendChild(loadingDiv);
+                messages.scrollTop = messages.scrollHeight;
+
+                try {
+                    const res = await fetch("/api/hyperbot", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            query: q,
+                            history: chatHistory.slice(-6)
+                        })
+                    });
+                    const data = await res.json();
+                    loadingDiv.remove();
+
+                    chatHistory.push({ role: "user", content: q });
+                    if (data.reply) {
+                        chatHistory.push({ role: "assistant", content: data.reply });
+                    }
+
+                    speakReply(data.reply);
+
+                    const aiWrap = document.createElement("div");
+                    aiWrap.className = "flex flex-col gap-2 max-w-[94%]";
+                    aiWrap.innerHTML = `<div class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm leading-relaxed">${esc(data.reply)}</div>`;
+
+                    if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                        const cardsHtml = data.recommendations.map((p) => {
+                            const out = Number(p.inventory_count || 0) <= 0;
+                            return `
+                                <button type="button" data-goto-product="${esc(p.name)}"
+                                    class="w-full text-left bg-white hover:bg-blue-50/70 border border-slate-200 hover:border-primary rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-sm transition-all group">
+                                    <div class="min-w-0">
+                                        <div class="font-extrabold text-slate-900 group-hover:text-primary truncate">${esc(p.name)}</div>
+                                        <div class="text-[11px] font-bold text-slate-600 mt-0.5">
+                                            ₹${Number(p.price || 0).toLocaleString("en-IN")} &middot;
+                                            <span class="${out ? "text-rose-600" : "text-emerald-600"}">${out ? "Out of stock" : p.inventory_count + " in stock"}</span>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-primary shrink-0">
+                                        <span>View</span>
+                                        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+                                    </span>
+                                </button>`;
+                        }).join("");
+                        aiWrap.innerHTML += `<div class="flex flex-col gap-1.5">${cardsHtml}</div>`;
+                    }
+
+                    messages.appendChild(aiWrap);
+                } catch (err) {
+                    loadingDiv.remove();
+                    const errDiv = document.createElement("div");
+                    errDiv.className = "bg-rose-50 border border-rose-200 text-rose-700 p-2.5 rounded-xl text-xs";
+                    errDiv.textContent = "Could not reach HyperBot right now. Make sure server.py is running.";
+                    messages.appendChild(errDiv);
+                }
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const q = input.value.trim();
+                if (!q) return;
+                input.value = "";
+                askHyperBot(q);
+            });
+
+            messages.addEventListener("click", (e) => {
+                const chip = e.target.closest("[data-quick-ask]");
+                if (chip) {
+                    askHyperBot(chip.dataset.quickAsk);
+                    return;
+                }
+                const prodBtn = e.target.closest("[data-goto-product]");
+                if (prodBtn) {
+                    goToProductOnStore(prodBtn.dataset.gotoProduct);
+                }
+            });
         })();
     </script>
 </body>
