@@ -3,7 +3,7 @@ from search import client, INDEX_NAME
 
 SAMPLE_PRODUCTS = [
     {"id": 1, "name": "Bluetooth Earphones Pro", "category": "Audio", "price": 1999, "inventory_count": 5, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=80", "tags": "music, earbuds, wireless, pods, bass, calls, gym, audio"},
-    {"id": 2, "name": "Nexus Smart Watch Ultra", "category": "Wearables", "price": 4500, "inventory_count": 2, "city": "Mumbai", "image_url": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&q=80", "tags": "fitness, tracker, health, steps, heart rate, clock, sports, wrist"},
+    {"id": 2, "name": "Nexus Smart Watch Ultra", "category": "Wearables", "price": 4500, "inventory_count": 6, "city": "Mumbai", "image_url": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&q=80", "tags": "fitness, tracker, health, steps, heart rate, clock, sports, wrist, watch, accessory"},
     {"id": 3, "name": "Wireless Ergonomic Mouse", "category": "Accessories", "price": 850, "inventory_count": 10, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&q=80", "tags": "computer, pc, office, wfh, click, cursor, laptop accessory"},
     {"id": 4, "name": "Sennheiser Studio Headphones", "category": "Audio", "price": 14999, "inventory_count": 8, "city": "Delhi", "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80", "tags": "music, sound, anc, noise cancelling, studio, gaming, headset, over ear"},
     {"id": 5, "name": "Mechanical Gaming Keyboard", "category": "Accessories", "price": 3499, "inventory_count": 15, "city": "Pune", "image_url": "https://images.unsplash.com/photo-1595225476474-87563907a212?w=500&q=80", "tags": "typing, rgb, gamer, pc, esports, coding, switches, desk"},
@@ -11,8 +11,18 @@ SAMPLE_PRODUCTS = [
     {"id": 7, "name": "Ergonomic Mesh Office Chair", "category": "Furniture", "price": 8500, "inventory_count": 12, "city": "Chennai", "image_url": "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=500&q=80", "tags": "seat, back pain, lumbar, wfh, study, desk, swivel, comfort"},
     {"id": 8, "name": "100W GaN Type-C Fast Charger", "category": "Accessories", "price": 999, "inventory_count": 25, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&q=80", "tags": "power, adapter, cable, battery, usb, fast charging, travel"},
     {"id": 9, "name": "Pro Titanium 5G Smartphone", "category": "Smartphones", "price": 79999, "inventory_count": 6, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&q=80", "tags": "mobile, phone, camera, iphone, android, calling, 5g, flagship"},
-    {"id": 10, "name": "Ultrabook 14 OLED Laptop", "category": "Laptops", "price": 94999, "inventory_count": 4, "city": "Mumbai", "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80", "tags": "macbook, notebook, computer, coding, college, work, portable, pc"}
+    {"id": 10, "name": "Ultrabook 14 OLED Laptop", "category": "Laptops", "price": 94999, "inventory_count": 4, "city": "Mumbai", "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80", "tags": "macbook, notebook, computer, coding, college, work, portable, pc"},
+
+    # Fashion & Wardrobe Items (Top, Bottom, Footwear, Kids)
+    {"id": 11, "name": "Classic White Oxford Shirt", "category": "Fashion", "price": 1299, "inventory_count": 20, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80", "tags": "fashion, shirt, top, men, formal, casual, cotton, clothing"},
+    {"id": 12, "name": "Floral Midi Summer Dress", "category": "Fashion", "price": 1799, "inventory_count": 15, "city": "Mumbai", "image_url": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&q=80", "tags": "fashion, dress, dresses, top, women, floral, party, clothing"},
+    {"id": 13, "name": "Slim Fit Stretch Denim Jeans", "category": "Fashion", "price": 1599, "inventory_count": 22, "city": "Pune", "image_url": "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&q=80", "tags": "fashion, jeans, pant, pants, trousers, bottom, men, women, denim"},
+    {"id": 14, "name": "Classic Biker Leather Jacket", "category": "Fashion", "price": 2999, "inventory_count": 12, "city": "Delhi", "image_url": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80", "tags": "fashion, jacket, jackets, top, men, women, winter, outerwear"},
+    {"id": 15, "name": "Urban Street White Sneakers", "category": "Fashion", "price": 2499, "inventory_count": 18, "city": "Bengaluru", "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80", "tags": "fashion, shoe, shoes, sneakers, footwear, men, women, running, casual"},
+    {"id": 16, "name": "Kids Cozy Hoodie & Jeans Set", "category": "Fashion", "price": 1499, "inventory_count": 14, "city": "Hyderabad", "image_url": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&q=80", "tags": "fashion, kids, hoodie, top, boys, girls, dress, clothing"},
+    {"id": 17, "name": "Festive Embroidered Kurta Set", "category": "Fashion", "price": 1999, "inventory_count": 11, "city": "Jaipur", "image_url": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80", "tags": "fashion, kurta, ethnic, top, women, saree, traditional, festive"}
 ]
+
 
 def initialize_system():
     print("Setting up PostgreSQL...")
@@ -69,7 +79,8 @@ def initialize_system():
                                 "charger, adapter, power, cable, usb, type-c",
                                 "watch, smartwatch, wearable, fitness, tracker",
                                 "keyboard, mouse, gaming, gamer, peripheral, accessories",
-                                "wfh, office, desk, work, study, coding"
+                                "wfh, office, desk, work, study, coding",
+                                "fashion, dress, dresses, shirt, top, pant, pants, jeans, trousers, jacket, kurta, shoe, shoes, sneakers, footwear, men, women, kids"
                             ]
                         }
                     },
@@ -98,7 +109,8 @@ def initialize_system():
         client.index(index=INDEX_NAME, id=str(p["id"]), body=p)
     client.indices.refresh(index=INDEX_NAME)
 
-    print("Setup complete! Now run: python credentials/server.py")
+    print("Setup complete! Now run: py credentials/server.py")
+
 
 if __name__ == "__main__":
     initialize_system()
