@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv, find_dotenv
+from groq import Groq
 
 from db import get_conn, release_conn
 from search import search_products, update_search_stock
@@ -20,9 +21,15 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 producer = create_producer()
 
+# Initialize Groq AI client for HyperBot
+groq_api_key = os.getenv("GROQ_API_KEY")
+groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
+
+
 @app.route("/")
 def index():
     return send_from_directory(PUBLIC_DIR, "index.html")
+
 
 @app.route("/api/search", methods=["GET"])
 def api_search():
@@ -36,6 +43,7 @@ def api_search():
     except Exception as e:
         print("Search Error:", e)
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/orders", methods=["GET"])
 def api_orders():
@@ -68,6 +76,7 @@ def api_orders():
         return jsonify({"error": str(e)}), 500
     finally:
         release_conn(conn)
+
 
 @app.route("/api/checkout", methods=["POST"])
 def api_checkout():
@@ -128,6 +137,114 @@ def api_checkout():
     finally:
         release_conn(conn)
 
+
+@app.route("/api/hyperbot", methods=["POST"])
+def api_hyperbot():
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    city = (data.get("city") or "").strip()
+    history = data.get("history", [])
+
+    if not query:
+        return jsonify({"reply": "Please type a question so I can help!", "recommendations": []}), 400
+
+    try:
+        # Clean & cap conversation history to the last 6 messages
+        recent_history = [
+            {"role": m["role"], "content": str(m["content"])[:500]}
+            for m in history[-6:]
+            if isinstance(m, dict) and m.get("role") in ("user", "assistant") and m.get("content")
+        ]
+
+        # 1. RETRIEVE: Query live products from Aiven OpenSearch
+        city_filter = city if city and city.lower() != "all" else None
+        products = search_products(search_text=query, city=city_filter)
+
+        follow_up_words = (
+            "city", "where", "ship", "price", "cost", "cheap", "stock",
+            "available", "it", "those", "them", "which one", "other"
+        )
+        is_followup = any(w in query.lower() for w in follow_up_words)
+
+        if (not products or is_followup) and recent_history:
+            prev_user_msgs = [m["content"] for m in recent_history if m["role"] == "user"]
+            for prev_q in reversed(prev_user_msgs):
+                prev_hits = search_products(search_text=prev_q, city=city_filter)
+                if prev_hits:
+                    products = prev_hits
+                    break
+
+        exact_match = len(products) > 0
+        if not products:
+            products = search_products()
+
+        top_products = products[:4]
+
+        # 2. AUGMENT: Build live inventory context for the LLM
+        if top_products:
+            context_lines = [
+                f"- {p.get('name')} | Price: ₹{p.get('price')} | Stock: {p.get('inventory_count', 0)} units | City/Warehouse: {p.get('city', 'Bengaluru')} | Category: {p.get('category', 'General')}"
+                for p in top_products
+            ]
+            context_str = "\n".join(context_lines)
+        else:
+            context_str = "No products currently available."
+
+        # 3. GENERATE: Call Groq LLM with conversation memory + live OpenSearch data
+        ai_reply = None
+        if groq_client:
+            system_prompt = (
+                "You are HyperBot, an interactive AI Shopping Guide for HyperMart-Live. "
+                "Use the conversation history and the live store inventory below to answer directly and specifically. "
+                "If the user asks which city or warehouse an item is in, state the exact City/Warehouse from the inventory. "
+                "If the user asks which is cheaper, compare the exact ₹ prices. "
+                "Keep your reply helpful, accurate, and under 3 sentences.\n\n"
+                f"Live Store Inventory:\n{context_str}"
+            )
+
+            messages_payload = [
+                {"role": "system", "content": system_prompt},
+                *recent_history,
+                {"role": "user", "content": query}
+            ]
+
+            for model_name in ["llama-3.1-8b-instant", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.3-70b-versatile"]:
+                try:
+                    completion = groq_client.chat.completions.create(
+                        model=model_name,
+                        messages=messages_payload,
+                        temperature=0.2,
+                    )
+                    ai_reply = completion.choices[0].message.content
+                    break
+                except Exception as model_err:
+                    print(f"Model {model_name} failed:", model_err)
+
+        # Specific conversational fallback if Groq is unavailable or rate-limited
+        if not ai_reply:
+            if "city" in query.lower() or "where" in query.lower():
+                city_info = ", ".join(f"{p.get('name')} ({p.get('city', 'Bengaluru')})" for p in top_products[:2])
+                ai_reply = f"Here are the cities for those items: {city_info}."
+            elif "cheap" in query.lower() or "price" in query.lower():
+                cheapest = min(top_products, key=lambda x: float(x.get("price") or 0))
+                ai_reply = f"{cheapest.get('name')} is the lowest priced at ₹{cheapest.get('price')}."
+            elif top_products and exact_match:
+                names = ", ".join(p.get("name") for p in top_products[:2])
+                ai_reply = f"Yes! We have {names} available on HyperMart right now. Click any product below to jump straight to it!"
+            elif top_products:
+                ai_reply = "I couldn't find an exact match for your query, but here are items available on our website. Click any to view!"
+            else:
+                ai_reply = "No matching items are in stock right now."
+
+        return jsonify({
+            "reply": ai_reply,
+            "recommendations": top_products
+        })
+    except Exception as e:
+        print("HyperBot Error:", e)
+        return jsonify({"reply": "Sorry, HyperBot hit a snag. Please make sure the server is running and try again.", "recommendations": []}), 500
+
+
 def start_kafka_consumer():
     try:
         consumer = create_consumer("order_placed")
@@ -142,6 +259,7 @@ def start_kafka_consumer():
                 print("[Kafka Message Error]", err)
     except Exception as err:
         print("[Kafka Consumer Startup Error]", err)
+
 
 if __name__ == "__main__":
     threading.Thread(target=start_kafka_consumer, daemon=True).start()

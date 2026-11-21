@@ -84,6 +84,8 @@
   </style>
 </head>
 
+
+
 <body class="bg-surface font-sans text-on-surface antialiased selection:bg-primary/15 selection:text-primary">
 
     <!-- ==================== HEADER ==================== -->
@@ -2251,6 +2253,386 @@
 
             if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", bootstrapApp);
             else bootstrapApp();
+        })();
+    </script>
+
+    <!-- ==================== HYPERBOT VOICE + RAG AI CHATBOT ==================== -->
+    <div id="hyperbotRoot" class="fixed bottom-5 right-5 z-50 font-sans">
+        <!-- Floating Toggle Button -->
+        <button type="button" id="hyperbotToggleBtn"
+            class="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-2xl border border-white/20 transition-transform hover:scale-105">
+            <span class="material-symbols-outlined text-lg">smart_toy</span>
+            <span>Ask HyperBot</span>
+            <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+        </button>
+
+        <!-- Draggable & Minimizable Chat Window -->
+        <div id="hyperbotPanel"
+            class="hidden fixed bottom-5 right-5 w-[340px] sm:w-[380px] h-[510px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex-col overflow-hidden z-50">
+
+            <!-- Draggable Header -->
+            <div id="hyperbotHeader"
+                class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 cursor-move select-none"
+                title="Drag to move HyperBot">
+                <div class="flex items-center gap-2.5 pointer-events-none">
+                    <div
+                        class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg text-white">smart_toy</span>
+                    </div>
+                    <div>
+                        <div class="text-sm font-extrabold leading-none flex items-center gap-1.5">
+                            <span>HyperBot AI</span>
+                            <span
+                                class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/10 text-slate-300">Drag</span>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 font-semibold mt-1 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span>Voice + Live Store Guide</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <!-- Voice Output Mute/Unmute Toggle -->
+                    <button type="button" id="hyperbotVoiceToggleBtn" title="Toggle Voice Output"
+                        class="p-1 rounded-lg text-emerald-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span id="hyperbotVoiceIcon" class="material-symbols-outlined text-lg">volume_up</span>
+                    </button>
+                    <button type="button" id="hyperbotMinBtn" title="Minimize / Expand"
+                        class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span id="hyperbotMinIcon" class="material-symbols-outlined text-lg">remove</span>
+                    </button>
+                    <button type="button" id="hyperbotCloseBtn" title="Close"
+                        class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="hyperbotBody" class="flex-1 flex flex-col overflow-hidden">
+                <div id="hyperbotMessages" class="flex-1 p-3.5 overflow-y-auto bg-slate-50 flex flex-col gap-3 text-xs">
+                    <div
+                        class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm max-w-[90%] leading-relaxed">
+                        Namaste! I'm <strong>HyperBot</strong>. Tap the <strong>mic</strong> to speak or type below—I'll
+                        answer out loud and show clickable products!
+                    </div>
+                    <!-- Interactive Quick Suggestions -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" data-quick-ask="Is headset available?"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🎧 Is headset available?
+                        </button>
+                        <button type="button" data-quick-ask="bluetoth"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🎵 Bluetooth items
+                        </button>
+                        <button type="button" data-quick-ask="What items are on this website?"
+                            class="px-2.5 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200 text-[11px] font-bold transition-colors">
+                            🛍️ Show popular items
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Voice Listening Banner -->
+                <div id="hyperbotVoiceStatus"
+                    class="hidden px-3 py-1.5 bg-rose-50 border-t border-rose-200 text-rose-600 text-[11px] font-bold items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                    <span>Listening... speak your product request</span>
+                </div>
+
+                <!-- Input + Mic + Send -->
+                <form id="hyperbotForm" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                    <button type="button" id="hyperbotMicBtn" title="Speak to HyperBot"
+                        class="h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all shrink-0">
+                        <span id="hyperbotMicIcon" class="material-symbols-outlined text-lg">mic</span>
+                    </button>
+                    <input id="hyperbotInput" type="text" autocomplete="off"
+                        placeholder="Speak or type (e.g. 'bluetoth')..."
+                        class="flex-1 h-10 rounded-xl border-slate-300 text-xs font-medium focus:border-primary focus:ring-primary/20" />
+                    <button type="submit" id="hyperbotSendBtn"
+                        class="h-10 px-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold flex items-center justify-center transition-colors shrink-0">
+                        <span class="material-symbols-outlined text-lg">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById("hyperbotToggleBtn");
+            const closeBtn = document.getElementById("hyperbotCloseBtn");
+            const minBtn = document.getElementById("hyperbotMinBtn");
+            const minIcon = document.getElementById("hyperbotMinIcon");
+            const voiceToggleBtn = document.getElementById("hyperbotVoiceToggleBtn");
+            const voiceIcon = document.getElementById("hyperbotVoiceIcon");
+            const micBtn = document.getElementById("hyperbotMicBtn");
+            const micIcon = document.getElementById("hyperbotMicIcon");
+            const voiceStatus = document.getElementById("hyperbotVoiceStatus");
+            const panel = document.getElementById("hyperbotPanel");
+            const header = document.getElementById("hyperbotHeader");
+            const body = document.getElementById("hyperbotBody");
+            const form = document.getElementById("hyperbotForm");
+            const input = document.getElementById("hyperbotInput");
+            const messages = document.getElementById("hyperbotMessages");
+
+            let isMinimized = false;
+            let voiceEnabled = true;
+            let isListening = false;
+            const chatHistory = [];
+
+            function esc(str) {
+                return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+
+            // -------- VOICE OUTPUT (TEXT-TO-SPEECH) --------
+            function speakReply(text) {
+                if (!voiceEnabled || !("speechSynthesis" in window) || !text) return;
+                window.speechSynthesis.cancel();
+                const cleanText = String(text)
+                    .replace(/₹/g, "rupees ")
+                    .replace(/[*_`#]/g, "")
+                    .trim();
+                const utter = new SpeechSynthesisUtterance(cleanText);
+                utter.lang = "en-IN";
+                utter.rate = 1.05;
+                window.speechSynthesis.speak(utter);
+            }
+
+            function stopSpeaking() {
+                if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+            }
+
+            voiceToggleBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                voiceEnabled = !voiceEnabled;
+                voiceIcon.textContent = voiceEnabled ? "volume_up" : "volume_off";
+                voiceToggleBtn.classList.toggle("text-emerald-400", voiceEnabled);
+                voiceToggleBtn.classList.toggle("text-slate-400", !voiceEnabled);
+                if (!voiceEnabled) stopSpeaking();
+            });
+
+            // -------- VOICE INPUT (SPEECH-TO-TEXT — SINGLE SEND) --------
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition = null;
+            let voiceTranscript = "";
+
+            function setListeningUI(active) {
+                isListening = active;
+                voiceStatus.classList.toggle("hidden", !active);
+                voiceStatus.classList.toggle("flex", active);
+                micBtn.className = active
+                    ? "h-10 w-10 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center transition-all shrink-0 animate-pulse"
+                    : "h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all shrink-0";
+                micIcon.textContent = active ? "mic_off" : "mic";
+            }
+
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = "en-IN";
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    stopSpeaking();
+                    voiceTranscript = "";
+                    setListeningUI(true);
+                };
+
+                recognition.onresult = (event) => {
+                    let text = "";
+                    for (let i = 0; i < event.results.length; i++) {
+                        text += event.results[i][0].transcript;
+                    }
+                    voiceTranscript = text.trim();
+                    input.value = voiceTranscript;
+                };
+
+                recognition.onerror = (event) => {
+                    voiceTranscript = "";
+                    setListeningUI(false);
+                    if (event.error === "not-allowed") {
+                        alert("Please allow microphone access in Chrome to use Voice Shopping.");
+                    }
+                };
+
+                recognition.onend = () => {
+                    setListeningUI(false);
+                    const finalQuery = voiceTranscript.trim();
+                    voiceTranscript = "";
+                    if (finalQuery) {
+                        input.value = "";
+                        askHyperBot(finalQuery);
+                    }
+                };
+
+                micBtn.addEventListener("click", () => {
+                    if (isListening) recognition.stop();
+                    else recognition.start();
+                });
+            } else {
+                micBtn.title = "Voice input not supported in this browser (use Chrome)";
+                micBtn.classList.add("opacity-50", "cursor-not-allowed");
+            }
+
+            // -------- OPEN / CLOSE / MINIMIZE --------
+            toggleBtn.addEventListener("click", () => {
+                toggleBtn.classList.add("hidden");
+                panel.classList.remove("hidden");
+                panel.classList.add("flex");
+                if (isMinimized) toggleMinimize();
+                input.focus();
+            });
+
+            closeBtn.addEventListener("click", () => {
+                stopSpeaking();
+                if (recognition && isListening) recognition.stop();
+                panel.classList.add("hidden");
+                panel.classList.remove("flex");
+                toggleBtn.classList.remove("hidden");
+            });
+
+            function toggleMinimize() {
+                isMinimized = !isMinimized;
+                body.classList.toggle("hidden", isMinimized);
+                panel.style.height = isMinimized ? "auto" : "510px";
+                minIcon.textContent = isMinimized ? "open_in_full" : "remove";
+            }
+            minBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                toggleMinimize();
+            });
+
+            // -------- DRAGGABLE HEADER --------
+            let isDragging = false, offsetX = 0, offsetY = 0;
+            header.addEventListener("mousedown", (e) => {
+                if (e.target.closest("button")) return;
+                isDragging = true;
+                const rect = panel.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                panel.style.right = "auto";
+                panel.style.bottom = "auto";
+                panel.style.left = rect.left + "px";
+                panel.style.top = rect.top + "px";
+            });
+            window.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+                const maxX = window.innerWidth - panel.offsetWidth;
+                const maxY = window.innerHeight - panel.offsetHeight;
+                const nextX = Math.max(8, Math.min(maxX - 8, e.clientX - offsetX));
+                const nextY = Math.max(8, Math.min(maxY - 8, e.clientY - offsetY));
+                panel.style.left = nextX + "px";
+                panel.style.top = nextY + "px";
+            });
+            window.addEventListener("mouseup", () => { isDragging = false; });
+
+            // -------- JUMP TO PRODUCT ON CLICK --------
+            function goToProductOnStore(productName) {
+                const searchInput = document.getElementById("searchInput");
+                const searchForm = document.getElementById("searchForm");
+                if (searchInput && searchForm) {
+                    searchInput.value = productName;
+                    searchForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+                }
+                const grid = document.getElementById("productGrid");
+                if (grid) {
+                    setTimeout(() => grid.scrollIntoView({ behavior: "smooth", block: "center" }), 250);
+                }
+                if (!isMinimized) toggleMinimize();
+            }
+
+            // -------- SEND QUERY WITH MEMORY TO /api/hyperbot --------
+            async function askHyperBot(q) {
+                const userDiv = document.createElement("div");
+                userDiv.className = "self-end bg-primary text-white font-semibold p-3 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm";
+                userDiv.textContent = q;
+                messages.appendChild(userDiv);
+
+                const loadingDiv = document.createElement("div");
+                loadingDiv.className = "text-[11px] text-slate-400 italic px-1";
+                loadingDiv.textContent = "HyperBot is checking live store inventory...";
+                messages.appendChild(loadingDiv);
+                messages.scrollTop = messages.scrollHeight;
+
+                try {
+                    const res = await fetch("/api/hyperbot", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            query: q,
+                            history: chatHistory.slice(-6)
+                        })
+                    });
+                    const data = await res.json();
+                    loadingDiv.remove();
+
+                    // Save turn to conversation memory
+                    chatHistory.push({ role: "user", content: q });
+                    if (data.reply) {
+                        chatHistory.push({ role: "assistant", content: data.reply });
+                    }
+
+                    // Speak the AI reply out loud
+                    speakReply(data.reply);
+
+                    const aiWrap = document.createElement("div");
+                    aiWrap.className = "flex flex-col gap-2 max-w-[94%]";
+                    aiWrap.innerHTML = `<div class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm leading-relaxed">${esc(data.reply)}</div>`;
+
+                    if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                        const cardsHtml = data.recommendations.map((p) => {
+                            const out = Number(p.inventory_count || 0) <= 0;
+                            return `
+                                <button type="button" data-goto-product="${esc(p.name)}"
+                                    class="w-full text-left bg-white hover:bg-blue-50/70 border border-slate-200 hover:border-primary rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-sm transition-all group">
+                                    <div class="min-w-0">
+                                        <div class="font-extrabold text-slate-900 group-hover:text-primary truncate">${esc(p.name)}</div>
+                                        <div class="text-[11px] font-bold text-slate-600 mt-0.5">
+                                            ₹${Number(p.price || 0).toLocaleString("en-IN")} &middot;
+                                            <span class="${out ? "text-rose-600" : "text-emerald-600"}">${out ? "Out of stock" : p.inventory_count + " in stock"}</span>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-primary shrink-0">
+                                        <span>View</span>
+                                        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+                                    </span>
+                                </button>`;
+                        }).join("");
+                        aiWrap.innerHTML += `<div class="flex flex-col gap-1.5">${cardsHtml}</div>`;
+                    }
+
+                    messages.appendChild(aiWrap);
+                } catch (err) {
+                    loadingDiv.remove();
+                    const errDiv = document.createElement("div");
+                    errDiv.className = "bg-rose-50 border border-rose-200 text-rose-700 p-2.5 rounded-xl text-xs";
+                    errDiv.textContent = "Could not reach HyperBot right now. Make sure server.py is running.";
+                    messages.appendChild(errDiv);
+                }
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const q = input.value.trim();
+                if (!q) return;
+                input.value = "";
+                askHyperBot(q);
+            });
+
+            messages.addEventListener("click", (e) => {
+                const chip = e.target.closest("[data-quick-ask]");
+                if (chip) {
+                    askHyperBot(chip.dataset.quickAsk);
+                    return;
+                }
+                const prodBtn = e.target.closest("[data-goto-product]");
+                if (prodBtn) {
+                    goToProductOnStore(prodBtn.dataset.gotoProduct);
+                }
+            });
         })();
     </script>
 </body>
