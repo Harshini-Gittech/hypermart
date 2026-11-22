@@ -38,7 +38,7 @@ try:
 except Exception as pe:
     print(f"[Razorpay] Blueprint import note: {pe}")
 
-socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS)
+socketio = SocketIO(app, cors_allowed_origins=ALLOWED_ORIGINS, async_mode="threading")
 app.config["SOCKETIO"] = socketio
 
 KAFKA_TOPIC = "order_placed"
