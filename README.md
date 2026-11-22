@@ -9,17 +9,17 @@ HyperMart is a full-stack, event-driven e-commerce platform combining an interac
 ### 1. Auto-Recommended Product Dashboard & 3D Studio
 Dynamic recommendations powered by wishlist, recently checked items, and live stock/location signals, paired with instant **3D** and **+ Cart** actions[cite: 18, 26].
 
-![Auto-Recommended Product Dashboard](autorecommendation.png)
+![Auto-Recommended Product Dashboard](public/screenshot/screenshot/autorecommendation.png)
 
 ### 2. HyperMart Seller Hub (6-Side Upload & 3D Model Generation)
 Sellers can list products and upload 6 product angles (Front, Back, Left, Right, Top, Down/Bottom) to generate listing visuals and interactive 3D models[cite: 27].
 
-![HyperMart Seller Hub](sellerhub.png)
+![HyperMart Seller Hub](public/screenshot/screenshot/sellerhub.png)
 
 ### 3. HyperBot AI (Voice + Multi-Turn RAG Store Guide)
 Voice-enabled (`en-IN`) and text shopping assistant with multi-turn memory, quick prompts, live stock/pricing answers, and clickable product jump-cards[cite: 28].
 
-![HyperBot AI Assistant](aibot.png)
+![HyperBot AI Assistant](public/screenshot/screenshot/aibot.png)
 
 ---
 
