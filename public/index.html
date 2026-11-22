@@ -2512,7 +2512,7 @@
 
                 if (typeof io !== "undefined") {
                     const socket = io(API_BASE || undefined, {
-                        transports: ["websocket", "polling"]
+                        transports: ["polling"]
                     });
                     socket.on("stock_updated", (event) => {
                         [PRODUCTS, ALL_PRODUCTS].forEach((list) => {

@@ -23,10 +23,10 @@ PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 
 ALLOWED_ORIGINS = [
     "https://hypermart-one.vercel.app",
+    "https://hypermart-1-26t1.onrender.com",
     "http://127.0.0.1:5050",
     "http://localhost:5050",
 ]
-
 app = Flask(__name__, static_folder=PUBLIC_DIR, static_url_path="")
 CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
 app.register_blueprint(seller_bp)
