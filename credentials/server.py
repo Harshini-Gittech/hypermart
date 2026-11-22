@@ -1,9 +1,12 @@
 import os
+import json
 import threading
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 from db import get_conn, release_conn
 from search import search_products, update_search_stock
@@ -14,6 +17,9 @@ try:
     import razorpay
 except ImportError:
     razorpay = None
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 
 app = Flask(__name__, static_folder=PUBLIC_DIR, static_url_path="")
 CORS(app)
@@ -32,6 +38,49 @@ app.config["SOCKETIO"] = socketio
 KAFKA_TOPIC = "order_placed"
 producer = create_producer()
 
+
+def _get_razorpay_client():
+    if razorpay is None:
+        raise RuntimeError("razorpay package is not installed")
+    key_id = (os.getenv("RAZORPAY_KEY_ID") or "").strip()
+    key_secret = (os.getenv("RAZORPAY_KEY_SECRET") or "").strip()
+    if not key_id or not key_secret:
+        raise RuntimeError("RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is missing in .env")
+    return razorpay.Client(auth=(key_id, key_secret)), key_id
+
+
+def publish_order_event(order_id, product_id, quantity):
+    if producer is None:
+        return
+    try:
+        payload = {
+            "orderId": order_id,
+            "productId": product_id,
+            "quantity": quantity,
+        }
+        producer.send(KAFKA_TOPIC, value=json.dumps(payload).encode("utf-8"))
+        producer.flush()
+    except Exception as e:
+        print("[Kafka Publish Error]", e)
+
+
+def ensure_tables():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS orders (
+                    id SERIAL PRIMARY KEY,
+                    product_id INTEGER NOT NULL,
+                    quantity INTEGER NOT NULL DEFAULT 1,
+                    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+        conn.commit()
+    finally:
+        release_conn(conn)
+
+
 @app.route("/")
 def serve_index():
     return send_from_directory(PUBLIC_DIR, "index.html")
@@ -45,7 +94,6 @@ def api_search():
         return jsonify(rows)
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 
 @app.route("/api/orders", methods=["GET"])
@@ -74,6 +122,7 @@ def api_orders():
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         release_conn(conn)
+
 
 @app.route("/api/checkout", methods=["POST"])
 def api_checkout():
@@ -242,9 +291,12 @@ def server_verify_razorpay_payment():
             })
         except Exception as e:
             conn.rollback()
-        return jsonify({"success": False, "message": str(e)}), 400
-    finally:
-        release_conn(conn)
+            return jsonify({"success": False, "message": str(e)}), 400
+        finally:
+            release_conn(conn)
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 def start_kafka_consumer():
     try:
@@ -252,7 +304,8 @@ def start_kafka_consumer():
         print("[Kafka] Consumer listening on 'order_placed'...")
         for msg in consumer:
             try:
-                event = msg.value
+                raw = msg.value.decode("utf-8") if isinstance(msg.value, (bytes, bytearray)) else msg.value
+                event = json.loads(raw) if isinstance(raw, str) else raw
                 print(f"[Kafka Event] Product {event['productId']} | Stock: {event['newCount']} | Revenue: ₹{event['price']}")
                 update_search_stock(event["productId"], event["newCount"])
                 socketio.emit("stock_updated", event)
@@ -269,7 +322,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[Seller Tables Warning] {e}")
 
-    t = threading.Thread(target=kafka_consumer_loop, daemon=True)
+    t = threading.Thread(target=start_kafka_consumer, daemon=True)
     t.start()
 
     port = int(os.getenv("PORT", "5050"))
