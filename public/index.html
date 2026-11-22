@@ -18,8 +18,6 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <script type="module" src="/app-features.js"></script>
-    <script type="module" src="/app-features.js?v=3d"></script>
-    <script type="module" src="/app-features.js?v=4"></script>
 
 
     <script id="tailwind-config">
@@ -1006,6 +1004,11 @@
         (function () {
             "use strict";
 
+            const API_BASE = window.location.hostname.includes("vercel.app")
+                ? "https://hypermart-1-26t1.onrender.com"
+                : "";
+            window.HYPERMART_API_BASE = API_BASE;
+
             const PRODUCTS = [];
             const ALL_PRODUCTS = [];
 
@@ -1095,10 +1098,11 @@
             function resolveProductModelUrl(row) {
                 const combined = `${row.name || ""} ${row.category || ""}`.toLowerCase();
                 if (combined.includes("casio") || combined.includes("calculator")) {
-                    return "/uploads/models/casio_calculator.glb";
+                    return `${API_BASE}/uploads/models/casio_calculator.glb`;
                 }
                 if (row.model_url && typeof row.model_url === "string" && row.model_url.trim()) {
-                    return row.model_url.trim();
+                    const u = row.model_url.trim();
+                    return u.startsWith("http") ? u : `${API_BASE}${u.startsWith("/") ? "" : "/"}${u}`;
                 }
                 return null;
             }
@@ -1108,6 +1112,8 @@
                 const stock = Number(row.inventory_count ?? 0);
                 const modelType = detectModelType(row.name, cat);
                 const modelUrl = resolveProductModelUrl(row);
+                const rawImg = row.image_url || "";
+                const resolvedImg = rawImg.startsWith("http") ? rawImg : (rawImg ? `${API_BASE}${rawImg.startsWith("/") ? "" : "/"}${rawImg}` : `https://placehold.co/400x300/f1f5f9/334155?text=${encodeURIComponent(row.name)}`);
                 return {
                     id: String(row.id),
                     dbId: Number(row.id),
@@ -1133,7 +1139,7 @@
                     ],
                     specs: { Category: cat, Warehouse: row.city || "India", Stock: `${stock} units`, Delivery: "Prime Next-Day" },
                     description: `${row.name} — ships from ${row.city} warehouse.`,
-                    image: row.image_url,
+                    image: resolvedImg,
                     fallback: `https://placehold.co/400x300/f1f5f9/334155?text=${encodeURIComponent(row.name)}`
                 };
             }
@@ -1177,7 +1183,7 @@
                 try {
                     const params = new URLSearchParams();
                     if (query && query.trim()) params.set("q", query.trim());
-                    const res = await fetch(`/api/search?${params.toString()}`);
+                    const res = await fetch(`${API_BASE}/api/search?${params.toString()}`);
                     if (!res.ok) throw new Error("Failed to fetch /api/search");
                     const rows = await res.json();
                     const mapped = rows.map(mapDbProductToUI);
@@ -1231,7 +1237,6 @@
                 const picked = [];
                 const seen = new Set();
 
-                // 1. Prioritize Wishlist items ("Check Your Wishlist")
                 state.wishlist.forEach((id) => {
                     const p = source.find((x) => x.id === id);
                     if (p && !seen.has(p.id)) {
@@ -1246,7 +1251,6 @@
                     }
                 });
 
-                // 2. Next prioritize Recently Checked items
                 state.recentlyViewed.forEach((id) => {
                     const p = source.find((x) => x.id === id);
                     if (p && !seen.has(p.id)) {
@@ -1261,7 +1265,6 @@
                     }
                 });
 
-                // 3. Fill remaining slots with top in-stock picks
                 source.forEach((p) => {
                     if (picked.length >= 4 || seen.has(p.id)) return;
                     seen.add(p.id);
@@ -1610,7 +1613,7 @@
             async function openOrdersView() {
                 openUtilityModal("My Orders & Live Status", `<div class="text-xs text-slate-500">Loading orders...</div>`);
                 try {
-                    const res = await fetch("/api/orders");
+                    const res = await fetch(`${API_BASE}/api/orders`);
                     const orders = await res.json();
                     const savedMeta = JSON.parse(localStorage.getItem("hypermart_order_meta") || "[]");
 
@@ -2027,7 +2030,7 @@
 
                 const mv = document.getElementById("realModelViewer");
                 const canvasBox = document.getElementById("threeCanvasContainer");
-                const modelPath = p.modelUrl || `/models/${p.modelType}.glb`;
+                const modelPath = p.modelUrl || `${API_BASE}/models/${p.modelType}.glb`;
 
                 let hasRealGlb = false;
                 try {
@@ -2312,7 +2315,7 @@
 
                 async function finalizeCodOrder() {
                     try {
-                        const res = await fetch("/api/checkout", {
+                        const res = await fetch(`${API_BASE}/api/checkout`, {
                             method: "POST", headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ cart: state.cart.map((c) => ({ id: Number(c.id), quantity: c.qty })) })
                         });
@@ -2335,7 +2338,7 @@
                     let orderData = null;
 
                     try {
-                        const createRes = await fetch("/api/payments/create-order", {
+                        const createRes = await fetch(`${API_BASE}/api/payments/create-order`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -2368,7 +2371,7 @@
                             theme: { color: "#16a34a" },
                             handler: async function (response) {
                                 try {
-                                    const verifyRes = await fetch("/api/payments/verify", {
+                                    const verifyRes = await fetch(`${API_BASE}/api/payments/verify`, {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
@@ -2508,7 +2511,9 @@
                 stage.addEventListener("wheel", (e) => { e.preventDefault(); studio3D.targetZoom = Math.max(2.4, Math.min(7.4, studio3D.targetZoom + e.deltaY * 0.004)); }, { passive: false });
 
                 if (typeof io !== "undefined") {
-                    const socket = io();
+                    const socket = io(API_BASE || undefined, {
+                        transports: ["websocket", "polling"]
+                    });
                     socket.on("stock_updated", (event) => {
                         [PRODUCTS, ALL_PRODUCTS].forEach((list) => {
                             const p = list.find((item) => item.dbId === Number(event.productId));
@@ -2636,6 +2641,10 @@
 
     <script>
         (function () {
+            const API_BASE = window.HYPERMART_API_BASE ?? (window.location.hostname.includes("vercel.app")
+                ? "https://hypermart-1-26t1.onrender.com"
+                : "");
+
             const toggleBtn = document.getElementById("hyperbotToggleBtn");
             const closeBtn = document.getElementById("hyperbotCloseBtn");
             const minBtn = document.getElementById("hyperbotMinBtn");
@@ -2827,7 +2836,7 @@
                 messages.scrollTop = messages.scrollHeight;
 
                 try {
-                    const res = await fetch("/api/hyperbot", {
+                    const res = await fetch(`${API_BASE}/api/hyperbot`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -2876,7 +2885,7 @@
                     loadingDiv.remove();
                     const errDiv = document.createElement("div");
                     errDiv.className = "bg-rose-50 border border-rose-200 text-rose-700 p-2.5 rounded-xl text-xs";
-                    errDiv.textContent = "Could not reach HyperBot right now. Make sure server.py is running.";
+                    errDiv.textContent = "Could not reach HyperBot right now. Make sure backend is running.";
                     messages.appendChild(errDiv);
                 }
                 messages.scrollTop = messages.scrollHeight;
