@@ -8,4 +8,4 @@ for p in (ROOT_DIR, CREDS_DIR):
   if p not in sys.path:
     sys.path.insert(0, p)
 
-from server import app  # noqa: E402, F401
+from server import app  # noqa: E402, F401  # type: ignore[import-not-found]
